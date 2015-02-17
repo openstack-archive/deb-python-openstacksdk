@@ -1,0 +1,9 @@
+Document: python-openstacksdk-doc
+Title: python-openstacksdk Documentation
+Author: N/A
+Abstract: Sphinx documentation for python-openstacksdk
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-openstacksdk-doc/html/index.html
+Files: /usr/share/doc/python-openstacksdk-doc/html/*

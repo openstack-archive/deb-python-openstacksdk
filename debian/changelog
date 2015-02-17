@@ -1,0 +1,5 @@
+python-openstacksdk (0.3.2-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #778645)
+
+ -- Thomas Goirand <zigo@debian.org>  Tue, 17 Feb 2015 21:48:45 +0100
