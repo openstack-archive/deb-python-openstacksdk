@@ -63,7 +63,7 @@ Description: SDK for building applications to work with OpenStack - Python 2.x
  .
  This package contains the Python 2.x module.
 
-Package: python3-python-openstacksdk
+Package: python3-openstacksdk
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.6~)
 Depends: python3-oslo.utils (>= 1.2.0),
