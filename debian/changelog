@@ -1,4 +1,4 @@
-python-openstacksdk (0.3.2-1) unstable; urgency=medium
+python-openstacksdk (0.7.1-1) experimental; urgency=medium
 
   * Initial release. (Closes: #778645)
 
