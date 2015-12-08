@@ -89,12 +89,12 @@ Getting the Source Code
           review systems that we use.
 
 The canonical Git repository is hosted on openstack.org at
-http://git.openstack.org/cgit/stackforge/python-openstacksdk/, with a
-mirror on GitHub at https://github.com/stackforge/python-openstacksdk.
+http://git.openstack.org/cgit/openstack/python-openstacksdk/, with a
+mirror on GitHub at https://github.com/openstack/python-openstacksdk.
 Because of how Git works, you can create a local clone from either of those,
 or your own personal fork.::
 
-   (sdk3)$ git clone git@github.com:briancurtin/python-openstacksdk.git
+   (sdk3)$ git clone https://git.openstack.org/openstack/python-openstacksdk.git
    (sdk3)$ cd python-openstacksdk
 
 Installing Dependencies
@@ -122,38 +122,11 @@ environment to use the SDK in. This step installs the following dependencies.
 * `stevedore <https://pypi.python.org/pypi/stevedore>`_, which we use for
   working with plugins. stevedore builds on setuptools ``entry_points``.
 
-Running the Tests
------------------
-
-In order to run the entire test suite, simply run the ``tox`` command inside
-of your source checkout. This will attempt to run every test command listed
-inside of ``tox.ini``, which includes Python 2.6, 2.7, 3.3, 3.4, PyPy, and
-a PEP 8 check. You should run the full test suite on all versions before
-submitting changes for review in order to avoid unexpected failures in
-the continuous integration system.::
-
-   (sdk3)$ tox
-   ...
-   py33: commands succeeded
-   py34: commands succeeded
-   py26: commands succeeded
-   py27: commands succeeded
-   pypy: commands succeeded
-   pep8: commands succeeded
-   congratulations :)
-
-During development, it may be more convenient to run a subset of the tests
-to keep test time to a minimum. You can choose to run the tests only on one
-version. A step further is to run only the tests you are working on.::
-
-   (sdk3)$ tox -e py34                # Run run the tests on Python 3.4
-   (sdk3)$ tox -e py34 TestContainer  # Run only the TestContainer tests on 3.4
-
 Building the Documentation
 --------------------------
 
 Our documentation is written in reStructured Text and is built using
-Sphinx. A ``docs`` command is availble in our ``tox.ini``, allowing you
+Sphinx. A ``docs`` command is available in our ``tox.ini``, allowing you
 to build the documentation like you'd run tests. The ``docs`` command is
 not evaluated by default.::
 

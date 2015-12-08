@@ -2,16 +2,18 @@ Getting started with the OpenStack SDK
 ======================================
 
 For a listing of terms used throughout the SDK, including the names of
-projects and services supported by it, see the `Glossary <glossary>`_.
+projects and services supported by it, see the :doc:`glossary <../glossary>`.
 
 Installation
 ------------
 
 The OpenStack SDK is available on
-`PyPI <https://pypi.python.org/pypi/python-openstacksdk>`_ under the name
-**python-openstacksdk**. To install it, use ``pip``::
+`PyPI <https://pypi.python.org/pypi/openstacksdk>`_ under the name
+**openstacksdk**. To install it, use ``pip``::
 
-   $ pip install python-openstacksdk
+   $ pip install openstacksdk
+
+.. _user_guides:
 
 User Guides
 -----------
@@ -23,8 +25,21 @@ approach, this is where you'll want to begin.
 .. toctree::
    :maxdepth: 1
 
-   Connecting to an OpenStack Cloud <userguides/usage>
-   Working with data in the Object Store <userguides/object_store>
+   Connect to an OpenStack Cloud <guides/connect>
+   Connect to an OpenStack Cloud Using a Config File <guides/connect_from_config>
+   Logging <guides/logging>
+   Block Store <guides/block_store>
+   CDN <guides/cdn>
+   Compute <guides/compute>
+   Database <guides/database>
+   Identity <guides/identity>
+   Image <guides/image>
+   Key Management <guides/key_management>
+   Metric <guides/metric>
+   Network <guides/network>
+   Object Store <guides/object_store>
+   Orchestration <guides/orchestration>
+   Telemetry <guides/telemetry>
 
 API Documentation
 -----------------
@@ -39,23 +54,34 @@ Connection Interface
 ********************
 
 A *Connection* instance maintains your session, authentication, transport,
-and preferences, providing you with a set of higher-level interfaces to work
+and profile, providing you with a set of higher-level interfaces to work
 with OpenStack services.
 
 .. toctree::
    :maxdepth: 1
 
    connection
-   user_preference
+   profile
 
 Once you have a *Connection* instance, the following services may be exposed
-to you. Your user preferences determine the full set of exposed services,
+to you. Your user profile determine the full set of exposed services,
 but listed below are the ones provided by this SDK by default.
 
 .. toctree::
    :maxdepth: 1
 
+   Block Store <proxies/block_store>
+   CDN <proxies/cdn>
+   Compute <proxies/compute>
+   Database <proxies/database>
+   Identity <proxies/identity>
+   Image <proxies/image>
+   Key Management <proxies/key_management>
+   Metric <proxies/metric>
+   Network <proxies/network>
    Object Store <proxies/object_store>
+   Orchestration <proxies/orchestration>
+   Telemetry <proxies/telemetry>
 
 Resource Interface
 ******************
@@ -72,9 +98,17 @@ The following services have exposed *Resource* classes.
 .. toctree::
    :maxdepth: 1
 
+   Block Store <resources/block_store/index>
    Compute <resources/compute/index>
    Database <resources/database/index>
+   Identity <resources/identity/index>
+   Image <resources/image/index>
+   Key Management <resources/key_management/index>
+   Metric <resources/metric/index>
+   Network <resources/network/index>
+   Orchestration <resources/orchestration/index>
    Object Store <resources/object_store/index>
+   Telemetry <resources/telemetry/index>
 
 Low-Level Classes
 *****************
@@ -93,5 +127,7 @@ can be customized.
    identity_base
    identity_v2
    identity_v3
+   module_loader
    resource
    service_filter
+   utils

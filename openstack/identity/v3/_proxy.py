@@ -16,155 +16,797 @@ from openstack.identity.v3 import endpoint
 from openstack.identity.v3 import group
 from openstack.identity.v3 import policy
 from openstack.identity.v3 import project
+from openstack.identity.v3 import region
 from openstack.identity.v3 import service
+from openstack.identity.v3 import trust
 from openstack.identity.v3 import user
+from openstack import proxy
 
 
-class Proxy(object):
+class Proxy(proxy.BaseProxy):
 
-    def __init__(self, session):
-        self.session = session
+    def create_credential(self, **attrs):
+        """Create a new credential from attributes
 
-    def create_credential(self, **data):
-        return credential.Credential(data).create(self.session)
+        :param dict attrs: Keyword arguments which will be used to create
+            a :class:`~openstack.identity.v3.credential.Credential`,
+            comprised of the properties on the Credential class.
 
-    def delete_credential(self, **data):
-        credential.Credential(data).delete(self.session)
+        :returns: The results of credential creation
+        :rtype: :class:`~openstack.identity.v3.credential.Credential`
+        """
+        return self._create(credential.Credential, **attrs)
 
-    def find_credential(self, name_or_id):
-        return credential.Credential.find(self.session, name_or_id)
+    def delete_credential(self, value, ignore_missing=True):
+        """Delete a credential
 
-    def get_credential(self, **data):
-        return credential.Credential(data).get(self.session)
+        :param value: The value can be either the ID of a credential or a
+               :class:`~openstack.identity.v3.credential.Credential` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the credential does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent credential.
 
-    def list_credentials(self):
-        return credential.Credential.list(self.session)
+        :returns: ``None``
+        """
+        self._delete(credential.Credential, value,
+                     ignore_missing=ignore_missing)
 
-    def update_credential(self, **data):
-        return credential.Credential(data).update(self.session)
+    def find_credential(self, name_or_id, ignore_missing=True):
+        """Find a single credential
 
-    def create_domain(self, **data):
-        return domain.Domain(data).create(self.session)
+        :param name_or_id: The name or ID of a credential.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.credential.Credential`
+                  or None
+        """
+        return self._find(credential.Credential, name_or_id,
+                          ignore_missing=ignore_missing)
 
-    def delete_domain(self, **data):
-        domain.Domain(data).delete(self.session)
+    def get_credential(self, value):
+        """Get a single credential
 
-    def find_domain(self, name_or_id):
-        return domain.Domain.find(self.session, name_or_id)
+        :param value: The value can be the ID of a credential or a
+                      :class:`~openstack.identity.v3.credential.Credential`
+                      instance.
 
-    def get_domain(self, **data):
-        return domain.Domain(data).get(self.session)
+        :returns: One :class:`~openstack.identity.v3.credential.Credential`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(credential.Credential, value)
 
-    def list_domains(self):
-        return domain.Domain.list(self.session)
+    def credentials(self, **query):
+        """Retrieve a generator of credentials
 
-    def update_domain(self, **data):
-        return domain.Domain(data).update(self.session)
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
 
-    def create_endpoint(self, **data):
-        return endpoint.Endpoint(data).create(self.session)
+        :returns: A generator of credentials instances.
+        :rtype: :class:`~openstack.identity.v3.credential.Credential`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(credential.Credential, paginated=False, **query)
 
-    def delete_endpoint(self, **data):
-        endpoint.Endpoint(data).delete(self.session)
+    def update_credential(self, value, **attrs):
+        """Update a credential
 
-    def find_endpoint(self, name_or_id):
-        return endpoint.Endpoint.find(self.session, name_or_id)
+        :param value: Either the id of a credential or a
+                      :class:`~openstack.identity.v3.credential.Credential`
+                      instance.
+        :attrs kwargs: The attributes to update on the credential represented
+                       by ``value``.
 
-    def get_endpoint(self, **data):
-        return endpoint.Endpoint(data).get(self.session)
+        :returns: The updated credential
+        :rtype: :class:`~openstack.identity.v3.credential.Credential`
+        """
+        return self._update(credential.Credential, value, **attrs)
 
-    def list_endpoints(self):
-        return endpoint.Endpoint.list(self.session)
+    def create_domain(self, **attrs):
+        """Create a new domain from attributes
 
-    def update_endpoint(self, **data):
-        return endpoint.Endpoint(data).update(self.session)
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.domain.Domain`,
+                           comprised of the properties on the Domain class.
 
-    def create_group(self, **data):
-        return group.Group(data).create(self.session)
+        :returns: The results of domain creation
+        :rtype: :class:`~openstack.identity.v3.domain.Domain`
+        """
+        return self._create(domain.Domain, **attrs)
 
-    def delete_group(self, **data):
-        group.Group(data).delete(self.session)
+    def delete_domain(self, value, ignore_missing=True):
+        """Delete a domain
 
-    def find_group(self, name_or_id):
-        return group.Group.find(self.session, name_or_id)
+        :param value: The value can be either the ID of a domain or a
+                      :class:`~openstack.identity.v3.domain.Domain` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the domain does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent domain.
 
-    def get_group(self, **data):
-        return group.Group(data).get(self.session)
+        :returns: ``None``
+        """
+        self._delete(domain.Domain, value, ignore_missing=ignore_missing)
 
-    def list_groups(self):
-        return group.Group.list(self.session)
+    def find_domain(self, name_or_id, ignore_missing=True):
+        """Find a single domain
 
-    def update_group(self, **data):
-        return group.Group(data).update(self.session)
+        :param name_or_id: The name or ID of a domain.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.domain.Domain` or None
+        """
+        return self._find(domain.Domain, name_or_id,
+                          ignore_missing=ignore_missing)
 
-    def create_policy(self, **data):
-        return policy.Policy(data).create(self.session)
+    def get_domain(self, value):
+        """Get a single domain
 
-    def delete_policy(self, **data):
-        policy.Policy(data).delete(self.session)
+        :param value: The value can be the ID of a domain or a
+                      :class:`~openstack.identity.v3.domain.Domain` instance.
 
-    def find_policy(self, name_or_id):
-        return policy.Policy.find(self.session, name_or_id)
+        :returns: One :class:`~openstack.identity.v3.domain.Domain`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(domain.Domain, value)
 
-    def get_policy(self, **data):
-        return policy.Policy(data).get(self.session)
+    def domains(self, **query):
+        """Retrieve a generator of domains
 
-    def list_policys(self):
-        return policy.Policy.list(self.session)
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
 
-    def update_policy(self, **data):
-        return policy.Policy(data).update(self.session)
+        :returns: A generator of domain instances.
+        :rtype: :class:`~openstack.identity.v3.domain.Domain`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(domain.Domain, paginated=False, **query)
 
-    def create_project(self, **data):
-        return project.Project(data).create(self.session)
+    def update_domain(self, value, **attrs):
+        """Update a domain
 
-    def delete_project(self, **data):
-        project.Project(data).delete(self.session)
+        :param value: Either the id of a domain or a
+                      :class:`~openstack.identity.v3.domain.Domain` instance.
+        :attrs kwargs: The attributes to update on the domain represented
+                       by ``value``.
 
-    def find_project(self, name_or_id):
-        return project.Project.find(self.session, name_or_id)
+        :returns: The updated domain
+        :rtype: :class:`~openstack.identity.v3.domain.Domain`
+        """
+        return self._update(domain.Domain, value, **attrs)
 
-    def get_project(self, **data):
-        return project.Project(data).get(self.session)
+    def create_endpoint(self, **attrs):
+        """Create a new endpoint from attributes
 
-    def list_projects(self):
-        return project.Project.list(self.session)
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.endpoint.Endpoint`,
+                           comprised of the properties on the Endpoint class.
 
-    def update_project(self, **data):
-        return project.Project(data).update(self.session)
+        :returns: The results of endpoint creation
+        :rtype: :class:`~openstack.identity.v3.endpoint.Endpoint`
+        """
+        return self._create(endpoint.Endpoint, **attrs)
 
-    def create_service(self, **data):
-        return service.Service(data).create(self.session)
+    def delete_endpoint(self, value, ignore_missing=True):
+        """Delete an endpoint
 
-    def delete_service(self, **data):
-        service.Service(data).delete(self.session)
+        :param value: The value can be either the ID of an endpoint or a
+               :class:`~openstack.identity.v3.endpoint.Endpoint` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the endpoint does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent endpoint.
 
-    def find_service(self, name_or_id):
-        return service.Service.find(self.session, name_or_id)
+        :returns: ``None``
+        """
+        self._delete(endpoint.Endpoint, value, ignore_missing=ignore_missing)
 
-    def get_service(self, **data):
-        return service.Service(data).get(self.session)
+    def find_endpoint(self, name_or_id, ignore_missing=True):
+        """Find a single endpoint
 
-    def list_services(self):
-        return service.Service.list(self.session)
+        :param name_or_id: The name or ID of a endpoint.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.endpoint.Endpoint` or None
+        """
+        return self._find(endpoint.Endpoint, name_or_id,
+                          ignore_missing=ignore_missing)
 
-    def update_service(self, **data):
-        return service.Service(data).update(self.session)
+    def get_endpoint(self, value):
+        """Get a single endpoint
 
-    def create_user(self, **data):
-        return user.User(data).create(self.session)
+        :param value: The value can be the ID of an endpoint or a
+                      :class:`~openstack.identity.v3.endpoint.Endpoint`
+                      instance.
 
-    def delete_user(self, **data):
-        user.User(data).delete(self.session)
+        :returns: One :class:`~openstack.identity.v3.endpoint.Endpoint`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(endpoint.Endpoint, value)
 
-    def find_user(self, name_or_id):
-        return user.User.find(self.session, name_or_id)
+    def endpoints(self, **query):
+        """Retrieve a generator of endpoints
 
-    def get_user(self, **data):
-        return user.User(data).get(self.session)
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
 
-    def list_users(self):
-        return user.User.list(self.session)
+        :returns: A generator of endpoint instances.
+        :rtype: :class:`~openstack.identity.v3.endpoint.Endpoint`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(endpoint.Endpoint, paginated=False, **query)
 
-    def update_user(self, **data):
-        return user.User(data).update(self.session)
+    def update_endpoint(self, value, **attrs):
+        """Update a endpoint
+
+        :param value: Either the id of a endpoint or a
+                      :class:`~openstack.identity.v3.endpoint.Endpoint`
+                      instance.
+        :attrs kwargs: The attributes to update on the endpoint represented
+                       by ``value``.
+
+        :returns: The updated endpoint
+        :rtype: :class:`~openstack.identity.v3.endpoint.Endpoint`
+        """
+        return self._update(endpoint.Endpoint, value, **attrs)
+
+    def create_group(self, **attrs):
+        """Create a new group from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.group.Group`,
+                           comprised of the properties on the Group class.
+
+        :returns: The results of group creation
+        :rtype: :class:`~openstack.identity.v3.group.Group`
+        """
+        return self._create(group.Group, **attrs)
+
+    def delete_group(self, value, ignore_missing=True):
+        """Delete a group
+
+        :param value: The value can be either the ID of a group or a
+                      :class:`~openstack.identity.v3.group.Group` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the group does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent group.
+
+        :returns: ``None``
+        """
+        self._delete(group.Group, value, ignore_missing=ignore_missing)
+
+    def find_group(self, name_or_id, ignore_missing=True):
+        """Find a single group
+
+        :param name_or_id: The name or ID of a group.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.group.Group` or None
+        """
+        return self._find(group.Group, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_group(self, value):
+        """Get a single group
+
+        :param value: The value can be the ID of a group or a
+                      :class:`~openstack.identity.v3.group.Group`
+                      instance.
+
+        :returns: One :class:`~openstack.identity.v3.group.Group`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(group.Group, value)
+
+    def groups(self, **query):
+        """Retrieve a generator of groups
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of group instances.
+        :rtype: :class:`~openstack.identity.v3.group.Group`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(group.Group, paginated=False, **query)
+
+    def update_group(self, value, **attrs):
+        """Update a group
+
+        :param value: Either the id of a group or a
+                      :class:`~openstack.identity.v3.group.Group` instance.
+        :attrs kwargs: The attributes to update on the group represented
+                       by ``value``.
+
+        :returns: The updated group
+        :rtype: :class:`~openstack.identity.v3.group.Group`
+        """
+        return self._update(group.Group, value, **attrs)
+
+    def create_policy(self, **attrs):
+        """Create a new policy from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.policy.Policy`,
+                           comprised of the properties on the Policy class.
+
+        :returns: The results of policy creation
+        :rtype: :class:`~openstack.identity.v3.policy.Policy`
+        """
+        return self._create(policy.Policy, **attrs)
+
+    def delete_policy(self, value, ignore_missing=True):
+        """Delete a policy
+
+        :param value: The value can be either the ID of a policy or a
+                      :class:`~openstack.identity.v3.policy.Policy` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the policy does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent policy.
+
+        :returns: ``None``
+        """
+        self._delete(policy.Policy, value, ignore_missing=ignore_missing)
+
+    def find_policy(self, name_or_id, ignore_missing=True):
+        """Find a single policy
+
+        :param name_or_id: The name or ID of a policy.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.policy.Policy` or None
+        """
+        return self._find(policy.Policy, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_policy(self, value):
+        """Get a single policy
+
+        :param value: The value can be the ID of a policy or a
+                      :class:`~openstack.identity.v3.policy.Policy` instance.
+
+        :returns: One :class:`~openstack.identity.v3.policy.Policy`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(policy.Policy, value)
+
+    def policies(self, **query):
+        """Retrieve a generator of policies
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of policy instances.
+        :rtype: :class:`~openstack.identity.v3.policy.Policy`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(policy.Policy, paginated=False, **query)
+
+    def update_policy(self, value, **attrs):
+        """Update a policy
+
+        :param value: Either the id of a policy or a
+                      :class:`~openstack.identity.v3.policy.Policy` instance.
+        :attrs kwargs: The attributes to update on the policy represented
+                       by ``value``.
+
+        :returns: The updated policy
+        :rtype: :class:`~openstack.identity.v3.policy.Policy`
+        """
+        return self._update(policy.Policy, value, **attrs)
+
+    def create_project(self, **attrs):
+        """Create a new project from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.project.Project`,
+                           comprised of the properties on the Project class.
+
+        :returns: The results of project creation
+        :rtype: :class:`~openstack.identity.v3.project.Project`
+        """
+        return self._create(project.Project, **attrs)
+
+    def delete_project(self, value, ignore_missing=True):
+        """Delete a project
+
+        :param value: The value can be either the ID of a project or a
+                      :class:`~openstack.identity.v3.project.Project` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the project does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent project.
+
+        :returns: ``None``
+        """
+        self._delete(project.Project, value, ignore_missing=ignore_missing)
+
+    def find_project(self, name_or_id, ignore_missing=True):
+        """Find a single project
+
+        :param name_or_id: The name or ID of a project.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.project.Project` or None
+        """
+        return self._find(project.Project, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_project(self, value):
+        """Get a single project
+
+        :param value: The value can be the ID of a project or a
+                      :class:`~openstack.identity.v3.project.Project` instance.
+
+        :returns: One :class:`~openstack.identity.v3.project.Project`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(project.Project, value)
+
+    def projects(self, **query):
+        """Retrieve a generator of projects
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of project instances.
+        :rtype: :class:`~openstack.identity.v3.project.Project`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(project.Project, paginated=False, **query)
+
+    def update_project(self, value, **attrs):
+        """Update a project
+
+        :param value: Either the id of a project or a
+                      :class:`~openstack.identity.v3.project.Project` instance.
+        :attrs kwargs: The attributes to update on the project represented
+                       by ``value``.
+
+        :returns: The updated project
+        :rtype: :class:`~openstack.identity.v3.project.Project`
+        """
+        return self._update(project.Project, value, **attrs)
+
+    def create_service(self, **attrs):
+        """Create a new service from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.service.Service`,
+                           comprised of the properties on the Service class.
+
+        :returns: The results of service creation
+        :rtype: :class:`~openstack.identity.v3.service.Service`
+        """
+        return self._create(service.Service, **attrs)
+
+    def delete_service(self, value, ignore_missing=True):
+        """Delete a service
+
+        :param value: The value can be either the ID of a service or a
+                      :class:`~openstack.identity.v3.service.Service` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the service does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent service.
+
+        :returns: ``None``
+        """
+        self._delete(service.Service, value, ignore_missing=ignore_missing)
+
+    def find_service(self, name_or_id, ignore_missing=True):
+        """Find a single service
+
+        :param name_or_id: The name or ID of a service.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.service.Service` or None
+        """
+        return self._find(service.Service, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_service(self, value):
+        """Get a single service
+
+        :param value: The value can be the ID of a service or a
+                      :class:`~openstack.identity.v3.service.Service` instance.
+
+        :returns: One :class:`~openstack.identity.v3.service.Service`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(service.Service, value)
+
+    def services(self, **query):
+        """Retrieve a generator of services
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of service instances.
+        :rtype: :class:`~openstack.identity.v3.service.Service`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(service.Service, paginated=False, **query)
+
+    def update_service(self, value, **attrs):
+        """Update a service
+
+        :param value: Either the id of a service or a
+                      :class:`~openstack.identity.v3.service.Service` instance.
+        :attrs kwargs: The attributes to update on the service represented
+                       by ``value``.
+
+        :returns: The updated service
+        :rtype: :class:`~openstack.identity.v3.service.Service`
+        """
+        return self._update(service.Service, value, **attrs)
+
+    def create_user(self, **attrs):
+        """Create a new user from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.user.User`,
+                           comprised of the properties on the User class.
+
+        :returns: The results of user creation
+        :rtype: :class:`~openstack.identity.v3.user.User`
+        """
+        return self._create(user.User, **attrs)
+
+    def delete_user(self, value, ignore_missing=True):
+        """Delete a user
+
+        :param value: The value can be either the ID of a user or a
+                      :class:`~openstack.identity.v3.user.User` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the user does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent user.
+
+        :returns: ``None``
+        """
+        self._delete(user.User, value, ignore_missing=ignore_missing)
+
+    def find_user(self, name_or_id, ignore_missing=True):
+        """Find a single user
+
+        :param name_or_id: The name or ID of a user.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.user.User` or None
+        """
+        return self._find(user.User, name_or_id, ignore_missing=ignore_missing)
+
+    def get_user(self, value):
+        """Get a single user
+
+        :param value: The value can be the ID of a user or a
+                      :class:`~openstack.identity.v3.user.User` instance.
+
+        :returns: One :class:`~openstack.identity.v3.user.User`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(user.User, value)
+
+    def users(self, **query):
+        """Retrieve a generator of users
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of user instances.
+        :rtype: :class:`~openstack.identity.v3.user.User`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(user.User, paginated=False, **query)
+
+    def update_user(self, value, **attrs):
+        """Update a user
+
+        :param value: Either the id of a user or a
+                      :class:`~openstack.identity.v3.user.User` instance.
+        :attrs kwargs: The attributes to update on the user represented
+                       by ``value``.
+
+        :returns: The updated user
+        :rtype: :class:`~openstack.identity.v3.user.User`
+        """
+        return self._update(user.User, value, **attrs)
+
+    def create_trust(self, **attrs):
+        """Create a new trust from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.trust.Trust`,
+                           comprised of the properties on the Trust class.
+
+        :returns: The results of trust creation
+        :rtype: :class:`~openstack.identity.v3.trust.Trust`
+        """
+        return self._create(trust.Trust, **attrs)
+
+    def delete_trust(self, value, ignore_missing=True):
+        """Delete a trust
+
+        :param value: The value can be either the ID of a trust or a
+               :class:`~openstack.identity.v3.trust.Trust` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the credential does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent credential.
+
+        :returns: ``None``
+        """
+        self._delete(trust.Trust, value, ignore_missing=ignore_missing)
+
+    def find_trust(self, name_or_id, ignore_missing=True):
+        """Find a single trust
+
+        :param name_or_id: The name or ID of a trust.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.identity.v3.trust.Trust` or None
+        """
+        return self._find(trust.Trust, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_trust(self, value):
+        """Get a single trust
+
+        :param value: The value can be the ID of a trust or a
+                      :class:`~openstack.identity.v3.trust.Trust` instance.
+
+        :returns: One :class:`~openstack.identity.v3.trust.Trust`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(trust.Trust, value)
+
+    def trusts(self, **query):
+        """Retrieve a generator of trusts
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of trust instances.
+        :rtype: :class:`~openstack.identity.v3.trust.Trust`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(trust.Trust, paginated=False, **query)
+
+    def update_trust(self, value, **attrs):
+        """Update a trust
+
+        :param value: Either the id of a trust or a
+                      :class:`~openstack.identity.v3.trust.Trust` instance.
+        :attrs kwargs: The attributes to update on the trust represented
+                       by ``value``.
+
+        :returns: The updated trust
+        :rtype: :class:`~openstack.identity.v3.trust.Trust`
+        """
+        return self._update(trust.Trust, value, **attrs)
+
+    def create_region(self, **attrs):
+        """Create a new region from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.identity.v3.region.Region`,
+                           comprised of the properties on the Region class.
+
+        :returns: The results of region creation.
+        :rtype: :class:`~openstack.identity.v3.region.Region`
+        """
+        return self._create(region.Region, **attrs)
+
+    def delete_region(self, value, ignore_missing=True):
+        """Delete a region
+
+        :param value: The value can be either the ID of a region or a
+               :class:`~openstack.identity.v3.region.Region` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the region does not exist.
+                    When set to ``True``, no exception will be thrown when
+                    attempting to delete a nonexistent region.
+
+        :returns: ``None``
+        """
+        self._delete(region.Region, value, ignore_missing=ignore_missing)
+
+    def find_region(self, name_or_id, ignore_missing=True):
+        """Find a single region
+
+        :param name_or_id: The name or ID of a region.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the region does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent region.
+        :returns: One :class:`~openstack.identity.v3.region.Region` or None
+        """
+        return self._find(region.Region, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_region(self, value):
+        """Get a single region
+
+        :param value: The value can be the ID of a region or a
+                      :class:`~openstack.identity.v3.region.Region` instance.
+
+        :returns: One :class:`~openstack.identity.v3.region.Region`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no matching region can be found.
+        """
+        return self._get(region.Region, value)
+
+    def regions(self, **query):
+        """Retrieve a generator of regions
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the regions being returned.
+
+        :returns: A generator of region instances.
+        :rtype: :class:`~openstack.identity.v3.region.Region`
+        """
+        # TODO(briancurtin): This is paginated but requires base list changes.
+        return self._list(region.Region, paginated=False, **query)
+
+    def update_region(self, value, **attrs):
+        """Update a region
+
+        :param value: Either the id of a region or a
+                      :class:`~openstack.identity.v3.region.Region` instance.
+        :attrs kwargs: The attributes to update on the region represented
+                       by ``value``.
+
+        :returns: The updated region.
+        :rtype: :class:`~openstack.identity.v3.region.Region`
+        """
+        return self._update(region.Region, value, **attrs)

@@ -10,7 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from openstack.auth import service_filter
+from openstack import service_filter
 
 
 class IdentityService(service_filter.ServiceFilter):
@@ -30,5 +30,5 @@ class IdentityService(service_filter.ServiceFilter):
 class AdminService(IdentityService):
 
     def __init__(self, **kwargs):
-        kwargs['visibility'] = service_filter.ServiceFilter.ADMIN
+        kwargs['interface'] = service_filter.ServiceFilter.ADMIN
         super(AdminService, self).__init__(**kwargs)

@@ -28,26 +28,42 @@ class Alarm(resource.Resource):
     allow_list = True
 
     # Properties
+    #: The actions to do when alarm state changes to alarm
     alarm_actions = resource.prop('alarm_actions')
+    #: The UUID of the alarm
     alarm_id = resource.prop('alarm_id')
+    # TODO(briancurtin): undocumented
     combination_rule = resource.prop('combination_rule')
+    #: The description of the alarm
     description = resource.prop('description')
+    #: ``True`` if this alarm is enabled
     enabled = resource.prop('enabled', type=bool)
+    #: The actions to do when alarm state changes to insufficient data
     insufficient_data_actions = resource.prop('insufficient_data_actions')
+    #: The name for the alarm
     name = resource.prop('name')
+    #: The actions to do when alarm state change to ok
     ok_actions = resource.prop('ok_actions')
+    #: The ID of the project or tenant that owns the alarm
     project_id = resource.prop('project_id')
+    #: The actions should be re-triggered on each evaluation cycle
     repeat_actions = resource.prop('repeat_actions', type=bool)
+    #: The severity of the alarm
+    severity = resource.prop('severity')
+    #: The state off the alarm
     state = resource.prop('state')
+    #: The timestamp of the last alarm state change
     state_changed_at = resource.prop('state_timestamp')
-    threshold_rule = resource.prop('threshold_rule')
+    # TODO(briancurtin): undocumented
+    threshold_rule = resource.prop('threshold_rule', type=dict)
+    #: Describe time constraints for the alarm
     time_constraints = resource.prop('time_constraints')
+    #: Explicit type specifier to select which rule to follow
     type = resource.prop('type')
+    #: The timestamp of the last alarm definition update
     updated_at = resource.prop('timestamp')
+    #: The ID of the user who created the alarm
     user_id = resource.prop('user_id')
-
-    def __repr__(self):
-        return "alarm: %s" % self._attrs
 
     def change_state(self, session, next_state):
         """Set the state of an alarm.
@@ -55,8 +71,8 @@ class Alarm(resource.Resource):
            The next_state may be one of: 'ok' 'insufficient data' 'alarm'
         """
         url = utils.urljoin(self.base_path, self.id, 'state')
-        resp = session.put(url, service=self.service, json=next_state).body
-        return resp
+        resp = session.put(url, endpoint_filter=self.service, json=next_state)
+        return resp.json()
 
     def check_state(self, session):
         """Retrieve the current state of an alarm from the service.
@@ -64,6 +80,7 @@ class Alarm(resource.Resource):
            The properties of the alarm are not modified.
         """
         url = utils.urljoin(self.base_path, self.id, 'state')
-        resp = session.get(url, service=self.service).body
+        resp = session.get(url, endpoint_filter=self.service)
+        resp = resp.json()
         current_state = resp.replace('\"', '')
         return current_state

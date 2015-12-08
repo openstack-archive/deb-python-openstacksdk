@@ -17,7 +17,7 @@ from openstack import resource
 class Member(resource.Resource):
     id_attribute = 'member_id'
     resources_key = 'members'
-    base_path = '/images/%(image_id)/members'
+    base_path = '/images/%(image_id)s/members'
     service = image_service.ImageService()
 
     # capabilities
@@ -28,7 +28,11 @@ class Member(resource.Resource):
     allow_list = True
 
     # Properties
+    #: The date and time when the member was created.
     created_at = resource.prop('created_at')
+    #: Image ID stored through the image API. Typically a UUID.
     image_id = resource.prop('image_id')
+    #: The status of the image.
     status = resource.prop('status')
+    #: The date and time when the member was updated.
     updated_at = resource.prop('updated_at')

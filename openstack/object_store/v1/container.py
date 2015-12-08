@@ -11,15 +11,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from openstack import exceptions
-from openstack.object_store import object_store_service
+from openstack.object_store.v1 import _base
 from openstack import resource
-from openstack import utils
 
 
-class Container(resource.Resource):
+class Container(_base.BaseResource):
     base_path = "/"
-    service = object_store_service.ObjectStoreService()
     id_attribute = "name"
 
     allow_create = True
@@ -28,23 +25,6 @@ class Container(resource.Resource):
     allow_delete = True
     allow_list = True
     allow_head = True
-
-    # Account data (when id=None)
-    #: The transaction date and time.
-    timestamp = resource.prop("x-timestamp")
-    #: The total number of bytes that are stored in Object Storage for
-    #: the account.
-    account_bytes_used = resource.prop("x-account-bytes-used")
-    #: The number of containers.
-    account_container_count = resource.prop("x-account-container-count")
-    #: The number of objects in the account.
-    account_object_count = resource.prop("x-account-object-count")
-    #: The secret key value for temporary URLs. If not set,
-    #: this header is not returned by this operation.
-    meta_temp_url_key = resource.prop("x-account-meta-temp-url-key")
-    #: A second secret key value for temporary URLs. If not set,
-    #: this header is not returned by this operation.
-    meta_temp_url_key_2 = resource.prop("x-account-meta-temp-url-key-2")
 
     # Container body data (when id=None)
     #: The name of the container.
@@ -57,9 +37,9 @@ class Container(resource.Resource):
 
     # Container metadata (when id=name)
     #: The number of objects.
-    object_count = resource.prop("x-container-object-count")
+    object_count = resource.header("x-container-object-count", type=int)
     #: The count of bytes used in total.
-    bytes_used = resource.prop("x-container-bytes-used")
+    bytes_used = resource.header("x-container-bytes-used", type=int)
 
     # Request headers (when id=None)
     #: If set to True, Object Storage queries all replicas to return the
@@ -67,60 +47,67 @@ class Container(resource.Resource):
     #: faster after it finds one valid replica. Because setting this
     #: header to True is more expensive for the back end, use it only
     #: when it is absolutely needed.
-    newest = resource.prop("x-newest", type=bool)
+    newest = resource.header("x-newest", type=bool)
 
     # Request headers (when id=name)
     #: The ACL that grants read access. If not set, this header is not
     #: returned by this operation.
-    read_ACL = resource.prop("x-container-read")
+    read_ACL = resource.header("x-container-read")
     #: The ACL that grants write access. If not set, this header is not
     #: returned by this operation.
-    write_ACL = resource.prop("x-container-write")
+    write_ACL = resource.header("x-container-write")
     #: The destination for container synchronization. If not set,
     #: this header is not returned by this operation.
-    sync_to = resource.prop("x-container-sync-to")
+    sync_to = resource.header("x-container-sync-to")
     #: The secret key for container synchronization. If not set,
     #: this header is not returned by this operation.
-    sync_key = resource.prop("x-container-sync-key")
+    sync_key = resource.header("x-container-sync-key")
     #: Enables versioning on this container. The value is the name
     #: of another container. You must UTF-8-encode and then URL-encode
     #: the name before you include it in the header. To disable
     #: versioning, set the header to an empty string.
-    versions_location = resource.prop("x-versions-location")
+    versions_location = resource.header("x-versions-location")
     #: Set to any value to disable versioning.
-    remove_versions_location = resource.prop("x-remove-versions-location")
+    remove_versions_location = resource.header("x-remove-versions-location")
     #: Changes the MIME type for the object.
-    content_type = resource.prop("content-type")
+    content_type = resource.header("content-type")
     #: If set to true, Object Storage guesses the content type based
     #: on the file extension and ignores the value sent in the
     #: Content-Type header, if present.
-    detect_content_type = resource.prop("x-detect-content-type", type=bool)
+    detect_content_type = resource.header("x-detect-content-type", type=bool)
     #: In combination with Expect: 100-Continue, specify an
     #: "If-None-Match: \*" header to query whether the server already
     #: has a copy of the object before any data is sent.
-    if_none_match = resource.prop("if-none-match")
+    if_none_match = resource.header("if-none-match")
 
-    def _do_create_update(self, session, method):
-        url = utils.urljoin(self.base_path, self.id)
+    @classmethod
+    def create_by_id(cls, session, attrs, resource_id=None):
+        """Create a Resource from its attributes.
 
-        # Only send actual headers, not potentially set body values.
-        headers = self._attrs.copy()
-        for val in ("name", "count", "bytes"):
-            headers.pop(val, None)
+        :param session: The session to use for making this request.
+        :type session: :class:`~openstack.session.Session`
+        :param dict attrs: The attributes to be sent in the body
+                           of the request.
+        :param resource_id: This resource's identifier, if needed by
+                            the request. The default is ``None``.
 
-        data = method(url, service=self.service, accept=None,
-                      headers=headers).headers
-        self._reset_dirty()
-        return data
+        :return: A ``dict`` representing the response headers.
+        """
+        url = cls._get_url(None, resource_id)
+        headers = attrs.get(resource.HEADERS, dict())
+        headers['Accept'] = ''
+        return session.put(url, endpoint_filter=cls.service,
+                           headers=headers).headers
 
     def create(self, session):
-        if not self.allow_create:
-            raise exceptions.MethodNotSupported('create')
+        """Create a Resource from this instance.
 
-        return self._do_create_update(session, session.put)
+        :param session: The session to use for making this request.
+        :type session: :class:`~openstack.session.Session`
 
-    def update(self, session):
-        if not self.allow_update:
-            raise exceptions.MethodNotSupported('update')
-
-        return self._do_create_update(session, session.post)
+        :return: This instance.
+        """
+        resp = self.create_by_id(session, self._attrs, self.id)
+        self.set_headers(resp)
+        self._reset_dirty()
+        return self

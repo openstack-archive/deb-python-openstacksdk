@@ -17,7 +17,7 @@ from openstack import resource
 class HealthMonitor(resource.Resource):
     resource_key = 'healthmonitor'
     resources_key = 'healthmonitors'
-    base_path = '/healthmonitors'
+    base_path = '/lbaas/healthmonitors'
     service = network_service.NetworkService()
 
     # capabilities
@@ -26,16 +26,32 @@ class HealthMonitor(resource.Resource):
     allow_update = True
     allow_delete = True
     allow_list = True
-    put_update = True
 
     # Properties
+    #: The administrative state of the health monitor, which is up
+    #: ``True`` or down ``False``. *Type: bool*
     admin_state_up = resource.prop('admin_state_up', type=bool)
+    #: The time, in seconds, between sending probes to members.
     delay = resource.prop('delay')
+    #: Expected HTTP codes for a passing HTTP(S) monitor.
     expected_codes = resource.prop('expected_codes')
+    #: The HTTP method that the monitor uses for requests.
     http_method = resource.prop('http_method')
+    #: Maximum consecutive health probe tries.
     max_retries = resource.prop('max_retries')
+    #: List of IDs of lbaas pools healthmonitor assocaited with
+    pools = resource.prop('pools')
+    #: Owner of the VIP
     project_id = resource.prop('tenant_id')
+    #: The status of the health monitor. Indicates whether the health
+    #: monitor is operational.
     status = resource.prop('status')
+    #: The maximum number of seconds for a monitor to wait for a connection
+    #: to be established before it times out. This value must be less than
+    #: the delay value.
     timeout = resource.prop('timeout')
+    #: The type of probe sent by the load balancer to verify the member
+    #: state, which is PING, TCP, HTTP, or HTTPS.
     type = resource.prop('type')
+    #: Path portion of URI that will be probed if type is HTTP(S).
     url_path = resource.prop('url_path')

@@ -10,73 +10,58 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from openstack.object_store.v1 import account as _account
 from openstack.object_store.v1 import container as _container
 from openstack.object_store.v1 import obj as _obj
+from openstack import proxy
 
 
-class Proxy(object):
-
-    def __init__(self, session):
-        self.session = session
+class Proxy(proxy.BaseProxy):
 
     def get_account_metadata(self):
-        """Get metatdata for this account.
+        """Get metatdata for this account
 
         :rtype:
-            :class:`~openstack.object_store.v1.container.Container`
+            :class:`~openstack.object_store.v1.account.Account`
         """
-        return _container.Container().head(self.session)
+        return self._head(_account.Account)
 
-    def set_account_metadata(self, container):
+    def set_account_metadata(self, account):
         """Set metatdata for this account.
 
-        :param container: Account metadata specified on a
-            :class:`~openstack.object_store.v1.container.Container` object
+        :param account: Account metadata specified on a
+            :class:`~openstack.object_store.v1.account.Account` object
             to be sent to the server.
-        :type container:
-            :class:`~openstack.object_store.v1.container.Container`
+        :type account:
+            :class:`~openstack.object_store.v1.account.Account`
 
         :rtype: ``None``
         """
-        container.update(self.session)
+        account.update(self.session)
 
-    def containers(self, limit=None, marker=None, **kwargs):
+    def containers(self, **query):
         """Obtain Container objects for this account.
 
-        :param int limit: Set the limit of how many containers to retrieve
-            in each request to the server. By default, the value is ``None``,
-            retrieving the maximum amount of containers per request that
-            your server allows.
-        :param str marker: The name of the container to begin iterating from.
-            By default, the value is ``None``, returning all available
-            containers.
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
 
         :rtype: A generator of
             :class:`~openstack.object_store.v1.container.Container` objects.
         """
-        return _container.Container.list(self.session, limit=limit,
-                                         marker=marker, **kwargs)
+        return _container.Container.list(self.session, **query)
 
-    def get_container_metadata(self, container):
-        """Get metatdata for a container.
+    def get_container_metadata(self, value):
+        """Get metatdata for a container
 
-        :param container: The container to retreive metadata for. You can
-            pass a container object or the name of a container to
-            retrieve metadata for.
-        :type container:
-            :class:`~openstack.object_store.v1.container.Container`
+        :param value: The value can be the name of a container or a
+               :class:`~openstack.object_store.v1.container.Container`
+               instance.
 
-        :rtype:
-            :class:`~openstack.object_store.v1.container.Container`
-        :raises: :exc:`ValueError` when an unnamed container object was
-            specified, as this would instead retrieve account metadata.
+        :returns: One :class:`~openstack.object_store.v1.container.Container`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
         """
-        container = _container.Container.from_id(container)
-        if getattr(container, "name") is None:
-            msg = "A named container or a name itself must be passed"
-            raise ValueError(msg)
-
-        return container.head(self.session)
+        return self._head(_container.Container, value)
 
     def set_container_metadata(self, container):
         """Set metatdata for a container.
@@ -89,49 +74,55 @@ class Proxy(object):
         """
         container.create(self.session)
 
-    def create_container(self, container):
-        """Create a container,
+    def create_container(self, **attrs):
+        """Create a new container from attributes
 
-        :param container: The container to create. You can pass a container
-            object or the name of a container to create.
-        :type container:
-            :class:`~openstack.object_store.v1.container.Container`
+        :param dict attrs: Keyword arguments which will be used to create
+               a :class:`~openstack.object_store.v1.container.Container`,
+               comprised of the properties on the Container class.
 
-        :rtype:
-            :class:`~openstack.object_store.v1.container.Container`
+        :returns: The results of container creation
+        :rtype: :class:`~openstack.object_store.v1.container.Container`
         """
-        container = _container.Container.from_id(container)
-        return container.create(self.session)
+        # TODO(brian): s/_container/container once other changes propogate
+        return self._create(_container.Container, **attrs)
 
-    def delete_container(self, container):
-        """Delete a container.
+    def delete_container(self, value, ignore_missing=True):
+        """Delete a container
 
-        :param container: The container to delete. You can pass a container
-            object or the name of a container to delete.
-        :type container:
-            :class:`~openstack.object_store.v1.container.Container`
+        :param value: The value can be either the name of a container or a
+                      :class:`~openstack.object_store.v1.container.Container`
+                      instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the container does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent server.
 
-        :rtype: ``None``
+        :returns: ``None``
         """
-        container = _container.Container.from_id(container)
-        container.delete(self.session)
+        # TODO(brian): s/_container/container once other changes propogate
+        self._delete(_container.Container, value,
+                     ignore_missing=ignore_missing)
 
-    def objects(self, container, limit=None, marker=None, **kwargs):
+    def objects(self, container, **query):
         """Return a generator that yields the Container's objects.
 
         :param container: A container object or the name of a container
             that you want to retrieve objects from.
         :type container:
             :class:`~openstack.object_store.v1.container.Container`
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
 
         :rtype: A generator of
             :class:`~openstack.object_store.v1.obj.Object` objects.
         """
         container = _container.Container.from_id(container)
 
-        objs = _obj.Object.list(self.session, limit=limit, marker=marker,
+        objs = _obj.Object.list(self.session,
                                 path_args={"container": container.name},
-                                **kwargs)
+                                **query)
         # TODO(briancurtin): Objects have to know their container at this
         # point, otherwise further operations like getting their metadata
         # or downloading them is a hassle because the end-user would have
@@ -140,67 +131,113 @@ class Proxy(object):
             ob.container = container.name
             yield ob
 
-    def get_object_data(self, obj):
-        """Retreive the data contained inside an object.
+    def _get_container_name(self, value, container):
+        if isinstance(value, _obj.Object):
+            if value.container is not None:
+                return value.container
+        if container is not None:
+            container = _container.Container.from_id(container)
+            return container.name
 
-        :param obj: The object to retreive.
-        :type obj: :class:`~openstack.object_store.v1.obj.Object`
+        raise ValueError("container must be specified")
+
+    def get_object(self, value, container=None):
+        """Get the data associated with an object
+
+        :param value: The value can be the ID of an object or a
+                      :class:`~openstack.object_store.v1.obj.Object` instance.
+        :param container: The value can be the ID of a container or a
+               :class:`~openstack.object_store.v1.container.Container`
+               instance.
+
+        :returns: The contents of the object.  Use the
+                  :func:`~get_object_metadata`
+                  method if you want an object resource.
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
         """
-        return obj.get(self.session)
+        container_name = self._get_container_name(value, container)
 
-    def save_object(self, obj, path):
-        """Save the data contained inside an object to disk.
+        # TODO(brian): s/_obj/obj once other changes propogate
+        return self._get(_obj.Object, value,
+                         path_args={"container": container_name})
+
+    def download_object(self, obj, path):
+        """Download the data contained inside an object to disk.
 
         :param obj: The object to save to disk.
         :type obj: :class:`~openstack.object_store.v1.obj.Object`
         :param path str: Location to write the object contents.
         """
         with open(path, "w") as out:
-            out.write(self.get_object_data(obj))
+            out.write(self.get_object(obj))
 
-    def create_object(self, data, obj, container=None, **kwargs):
-        """Create an object within the object store.
+    def upload_object(self, **attrs):
+        """Upload a new object from attributes
 
-        :param data: The data to store.
-        :param obj: The name of the object to create, or an obj.Object
-        :type obj: :class:`~openstack.object_store.v1.obj.Object`
+        :param dict attrs: Keyword arguments which will be used to create
+               a :class:`~openstack.object_store.v1.obj.Object`,
+               comprised of the properties on the Object class.
+               **Required**: A `container` argument must be specified,
+               which is either the ID of a container or a
+               :class:`~openstack.object_store.v1.container.Container`
+               instance.
+
+        :returns: The results of object creation
+        :rtype: :class:`~openstack.object_store.v1.container.Container`
         """
-        obj = _obj.Object.from_id(obj)
+        container = attrs.pop("container", None)
+        container_name = self._get_container_name(None, container)
 
-        # If we were given an Object complete with an underlying Container,
-        # this attribute access will succeed. Otherwise we'll need to set
-        # a container value on `obj` out of the `container` value.
-        name = getattr(obj, "container")
-        if not name:
-            cnt = _container.Container.from_id(container)
-            obj.container = cnt.name
-
-        return obj.create(self.session, data)
+        # TODO(brian): s/_container/container once other changes propogate
+        return self._create(_obj.Object,
+                            path_args={"container": container_name}, **attrs)
 
     def copy_object(self):
         """Copy an object."""
         raise NotImplementedError
 
-    def delete_object(self, obj):
-        """Delete an object.
+    def delete_object(self, value, ignore_missing=True, container=None):
+        """Delete an object
 
-        :param obj: The object to delete.
-        :type obj: :class:`~openstack.object_store.v1.obj.Object`
+        :param value: The value can be either the name of an object or a
+                      :class:`~openstack.object_store.v1.container.Container`
+                      instance.
+        :param container: The value can be the ID of a container or a
+               :class:`~openstack.object_store.v1.container.Container`
+               instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the object does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent server.
 
-        :rtype: ``None``
+        :returns: ``None``
         """
-        obj.delete(self.session)
+        container_name = self._get_container_name(value, container)
 
-    def get_object_metadata(self, obj):
-        """Get metatdata for an object.
+        # TODO(brian): s/_obj/obj once other changes propogate
+        self._delete(_obj.Object, value, ignore_missing=ignore_missing,
+                     path_args={"container": container_name})
 
-        :param obj: The object to retreive metadata from.
-        :type obj: :class:`~openstack.object_store.v1.obj.Object`
+    def get_object_metadata(self, value, container=None):
+        """Get metatdata for an object
 
-        :return: A :class:`~openstack.object_store.v1.obj.Object`
-            populated with the server's response.
+        :param value: The value is an
+               :class:`~openstack.object_store.v1.obj.Object`
+               instance.
+        :param container: The value can be the ID of a container or a
+               :class:`~openstack.object_store.v1.container.Container`
+               instance.
+
+        :returns: One :class:`~openstack.object_store.v1.obj.Object`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
         """
-        return obj.head(self.session)
+        container_name = self._get_container_name(value, container)
+
+        return self._head(_obj.Object, value,
+                          path_args={"container": container_name})
 
     def set_object_metadata(self, obj):
         """Set metatdata for an object.

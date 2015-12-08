@@ -30,26 +30,17 @@ class User(resource.Resource):
     instance_id = resource.prop('instance_id')
 
     # Properties
+    #: Databases the user has access to
     databases = resource.prop('databases')
+    #: The name of the user
     name = resource.prop('name')
-    _password = resource.prop('password')
-
-    @property
-    def password(self):
-        try:
-            val = self._password
-        except AttributeError:
-            val = None
-        return val
-
-    @password.setter
-    def password(self, val):
-        self._password = val
+    #: The password of the user
+    password = resource.prop('password')
 
     @classmethod
     def create_by_id(cls, session, attrs, r_id=None, path_args=None):
-        url = cls.base_path % path_args
+        url = cls._get_url(path_args)
         # Create expects an array of users
         body = {'users': [attrs]}
-        resp = session.post(url, service=cls.service, json=body).body
-        return resp
+        resp = session.post(url, endpoint_filter=cls.service, json=body)
+        return resp.json()

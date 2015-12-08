@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc',
-    #'sphinx.ext.intersphinx',
+    'sphinx.ext.intersphinx',
     'oslosphinx',
 ]
 
@@ -53,9 +53,7 @@ pygments_style = 'sphinx'
 autodoc_member_order = "bysource"
 
 # Locations to exclude when looking for source files.
-# * Glossary is not included in any toctree, so it raised warnings, but it
-#   is explicitly linked to from the top of users/index.rst.
-exclude_patterns = ["users/glossary.rst"]
+exclude_patterns = []
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -79,7 +77,7 @@ latex_documents = [
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
-#intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'http://docs.python.org/3/': None}
 
 # Include both the class and __init__ docstrings when describing the class
 autoclass_content = "both"

@@ -19,7 +19,7 @@ the containers in the Object Store service.::
    from openstack import connection
    conn = connection.Connection(auth_url="http://openstack:5000/v3",
                                 project_name="big_project",
-                                user_name="SDK_user",
+                                username="SDK_user",
                                 password="Super5ecretPassw0rd")
    for container in conn.object_store.containers():
       print(container.name)
@@ -33,7 +33,7 @@ http://python-openstacksdk.readthedocs.org/en/latest/
 Requirements
 ------------
 
-* Python 2.6+, Python 3.3+
+* Python 2.7, Python 3.3+
 * pbr
 * requests
 * six

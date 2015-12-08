@@ -31,9 +31,12 @@ There are plenty of examples of use of this class in the SDK code.
 
 import abc
 import collections
+import copy
+import itertools
+import time
 
+from keystoneauth1 import exceptions as ksa_exceptions
 import six
-from six.moves.urllib import parse as url_parse
 
 from openstack import exceptions
 from openstack import utils
@@ -100,35 +103,101 @@ class prop(object):
         if instance is None:
             return None
         try:
-            value = instance._attrs[self.name]
+            value = instance[self.name]
         except KeyError:
             try:
-                value = instance._attrs[self.alias]
-            except KeyError:
+                value = instance[self.alias]
+            except (KeyError, AttributeError):
+                # If we either don't find the key or we don't have an alias
                 return self.default
 
         if self.type and not isinstance(value, self.type):
-            value = self.type(value)
-            attr = getattr(value, 'parsed', None)
-            if attr is not None:
-                value = attr
+            if issubclass(self.type, Resource):
+                if isinstance(value, six.string_types):
+                    value = self.type({self.type.id_attribute: value})
+                else:
+                    value = self.type(value)
+            else:
+                value = self.type(value)
+                attr = getattr(value, 'parsed', None)
+                if attr is not None:
+                    value = attr
 
         return value
 
     def __set__(self, instance, value):
-        if self.type and not isinstance(value, self.type):
-            value = str(self.type(value))  # validate to fail fast
+        if (self.type and not isinstance(value, self.type) and
+                value != self.default):
+            if issubclass(self.type, Resource):
+                if isinstance(value, six.string_types):
+                    value = self.type({self.type.id_attribute: value})
+                else:
+                    value = self.type(value)
+            else:
+                value = str(self.type(value))  # validate to fail fast
 
-        instance._attrs[self.name] = value
+        # If we already have a value set for the alias name, pop it out
+        # and store the real name instead. This happens when the alias
+        # has the same name as this prop is named.
+        if self.alias in instance._attrs:
+            instance._attrs.pop(self.alias)
+
+        instance[self.name] = value
 
     def __delete__(self, instance):
         try:
-            del instance._attrs[self.name]
+            del instance[self.name]
         except KeyError:
             try:
-                del instance._attrs[self.alias]
+                del instance[self.alias]
             except KeyError:
                 pass
+
+
+#: Key in attributes for header properties
+HEADERS = 'headers'
+
+
+class header(prop):
+    """A helper for defining header properties in a resource.
+
+    This property should be used for values passed in the header of a resource.
+    Header values are stored in a special 'headers' attribute of a resource.
+    Using this property will make it easier for users to access those values.
+    For example, and object store container:
+
+        >>> class Container(Resource):
+        ...     name = prop("name")
+        ...     object_count = header("x-container-object-count")
+        ...
+        >>> c = Container({name='pix'})
+        >>> c.head(session)
+        >>> print c["headers"]["x-container-object-count"]
+        4
+        >>> print c.object_count
+        4
+
+    The first print shows accessing the header value without the property
+    and the second print shows accessing the header with the property helper.
+    """
+
+    def _get_headers(self, instance):
+        if instance is None:
+            return None
+        if HEADERS in instance:
+            return instance[HEADERS]
+        return None
+
+    def __get__(self, instance, owner):
+        headers = self._get_headers(instance)
+        return super(header, self).__get__(headers, owner)
+
+    def __set__(self, instance, value):
+        headers = self._get_headers(instance)
+        if headers is None:
+            headers = instance._attrs[HEADERS] = {}
+        headers[self.name] = value
+        instance.set_headers(headers)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -165,7 +234,7 @@ class Resource(collections.MutableMapping):
     #: Allow head operation for this resource.
     allow_head = False
 
-    put_update = False
+    patch_update = False
 
     def __init__(self, attrs=None, loaded=False):
         """Construct a Resource to interact with a service's REST API.
@@ -180,20 +249,15 @@ class Resource(collections.MutableMapping):
         :param bool loaded: ``True`` if this Resource exists on
                             the server, ``False`` if it does not.
         """
-        if attrs is None:
-            attrs = {}
-
-        self._attrs = attrs
-        # ensure setters are called for type coercion
-        for k, v in attrs.items():
-            if k != 'id':  # id property is read only
-                setattr(self, k, v)
-
-        self._dirty = set() if loaded else set(attrs.keys())
+        self._attrs = {} if attrs is None else attrs.copy()
+        self._dirty = set() if loaded else set(self._attrs.keys())
+        self.update_attrs(self._attrs)
         self._loaded = loaded
 
     def __repr__(self):
-        return "%s: %s" % (self.get_resource_name(), self._attrs)
+        return "%s.%s(attrs=%s, loaded=%s)" % (self.__module__,
+                                               self.__class__.__name__,
+                                               self._attrs, self._loaded)
 
     @classmethod
     def get_resource_name(cls):
@@ -231,20 +295,55 @@ class Resource(collections.MutableMapping):
         return cls(kwargs, loaded=True)
 
     @classmethod
-    def from_id(cls, value):
-        """Create an instance from an ID or return an existing instance.
-
-        Instance creation is done via cls.new.
-        """
+    def _from_attr(cls, attribute, value):
         # This method is useful in the higher level, in cases where operations
         # need to depend on having Resource objects, but the API is flexible
         # in taking text values which represent those objects.
         if isinstance(value, cls):
             return value
         elif isinstance(value, six.string_types):
-            return cls.new(**{cls.id_attribute: value})
+            return cls.new(**{attribute: value})
         else:
-            raise ValueError("value must be %s instance or id" % cls.__name__)
+            raise ValueError("value must be %s instance or %s" % (
+                cls.__name__, attribute))
+
+    @classmethod
+    def from_id(cls, value):
+        """Create an instance from an ID or return an existing instance.
+
+        New instances are created with :meth:`~openstack.resource.Resource.new`
+
+        :param value: If ``value`` is an instance of this Resource type,
+                      it is returned.
+                      If ``value`` is an ID which an instance of this
+                      Resource type can be created with, one is created
+                      and returned.
+
+        :rtype: :class:`~openstack.resource.Resource` or the
+                appropriate subclass.
+        :raises: :exc:`ValueError` if ``value`` is not an instance of
+                 this Resource type or a valid ``id``.
+        """
+        return cls._from_attr(cls.id_attribute, value)
+
+    @classmethod
+    def from_name(cls, value):
+        """Create an instance from a name or return an existing instance.
+
+        New instances are created with :meth:`~openstack.resource.Resource.new`
+
+        :param value: If ``value`` is an instance of this Resource type,
+                      it is returned.
+                      If ``value`` is a name which an instance of this
+                      Resource type can be created with, one is created
+                      and returned.
+
+        :rtype: :class:`~openstack.resource.Resource` or the
+                appropriate subclass.
+        :raises: :exc:`ValueError` if ``value`` is not an instance of
+                this Resource type or a valid ``name``.
+        """
+        return cls._from_attr(cls.name_attribute, value)
 
     ##
     # MUTABLE MAPPING IMPLEMENTATION
@@ -297,6 +396,23 @@ class Resource(collections.MutableMapping):
         del self._attrs[self.id_attribute]
 
     @property
+    def name(self):
+        """The name associated with this resource.
+
+        The true value of the ``name`` property comes from the
+        attribute set as :data:`name_attribute`.
+        """
+        return self._attrs.get(self.name_attribute, None)
+
+    @name.setter
+    def name(self, value):
+        self._attrs[self.name_attribute] = value
+
+    @name.deleter
+    def name(self):
+        del self._attrs[self.name_attribute]
+
+    @property
     def is_dirty(self):
         """True if the resource needs to be updated to the remote."""
         return len(self._dirty) > 0
@@ -304,9 +420,94 @@ class Resource(collections.MutableMapping):
     def _reset_dirty(self):
         self._dirty = set()
 
+    def update_attrs(self, *args, **kwargs):
+        """Update the attributes on this resource
+
+        Note that this is implemented because Resource.update overrides
+        the update method we would get from the MutableMapping base class.
+
+        :params args: A dictionary of attributes to be updated.
+        :params kwargs: Named arguments to be set on this instance.
+                        When a key corresponds to a resource.prop,
+                        it will be set via resource.prop.__set__.
+
+        :rtype: None
+        """
+        ignore_none = kwargs.pop("ignore_none", False)
+
+        # ensure setters are called for type coercion
+        for key, value in itertools.chain(dict(*args).items(), kwargs.items()):
+            if key != "id":  # id property is read only
+
+                # Don't allow None values to override a key unless we've
+                # explicitly specified they can. Proxy methods have default
+                # None arguments that we don't want to override any values
+                # that may have been passed in on Resource instances.
+                if not all([ignore_none, value is None]):
+                    setattr(self, key, value)
+                    self[key] = value
+
+    def get_headers(self):
+        if HEADERS in self._attrs:
+            return self._attrs[HEADERS]
+        return {}
+
+    def set_headers(self, values):
+        self._attrs[HEADERS] = values
+        self._dirty.add(HEADERS)
+
+    def to_dict(self):
+        attrs = copy.deepcopy(self._attrs)
+        headers = attrs.pop(HEADERS, {})
+        attrs.update(headers)
+        return attrs
+
     ##
     # CRUD OPERATIONS
     ##
+
+    @staticmethod
+    def get_id(value):
+        """If a value is a Resource, return the canonical ID."""
+        if isinstance(value, Resource):
+            return value.id
+        else:
+            return value
+
+    @staticmethod
+    def _convert_ids(attrs):
+        """Return an attribute dictionary suitable for create/update
+
+        As some attributes may be Resource types, their ``id`` attribute
+        needs to be put in the Resource instance's place in order
+        to be properly serialized and understood by the server.
+        """
+        if attrs is None:
+            return
+
+        converted = attrs.copy()
+        for key, value in converted.items():
+            if isinstance(value, Resource):
+                converted[key] = value.id
+
+        return converted
+
+    @classmethod
+    def _get_create_body(cls, attrs):
+        if cls.resource_key:
+            return {cls.resource_key: attrs}
+        else:
+            return attrs
+
+    @classmethod
+    def _get_url(cls, path_args=None, resource_id=None):
+        if path_args:
+            url = cls.base_path % path_args
+        else:
+            url = cls.base_path
+        if resource_id is not None:
+            url = utils.urljoin(url, resource_id)
+        return url
 
     @classmethod
     def create_by_id(cls, session, attrs, resource_id=None, path_args=None):
@@ -327,23 +528,23 @@ class Resource(collections.MutableMapping):
                  :data:`Resource.allow_create` is not set to ``True``.
         """
         if not cls.allow_create:
-            raise exceptions.MethodNotSupported('create')
+            raise exceptions.MethodNotSupported(cls, 'create')
 
-        if cls.resource_key:
-            body = {cls.resource_key: attrs}
-        else:
-            body = attrs
+        # Convert attributes from Resource types into their ids.
+        attrs = cls._convert_ids(attrs)
+        headers = attrs.pop(HEADERS, None)
 
-        if path_args:
-            url = cls.base_path % path_args
-        else:
-            url = cls.base_path
+        body = cls._get_create_body(attrs)
+
+        url = cls._get_url(path_args, resource_id)
+        args = {'json': body}
+        if headers:
+            args[HEADERS] = headers
         if resource_id:
-            url = utils.urljoin(url, resource_id)
-            resp = session.put(url, service=cls.service, json=body).body
+            resp = session.put(url, endpoint_filter=cls.service, **args)
         else:
-            resp = session.post(url, service=cls.service,
-                                json=body).body
+            resp = session.post(url, endpoint_filter=cls.service, **args)
+        resp = resp.json()
 
         if cls.resource_key:
             resp = resp[cls.resource_key]
@@ -386,21 +587,17 @@ class Resource(collections.MutableMapping):
                  :data:`Resource.allow_retrieve` is not set to ``True``.
         """
         if not cls.allow_retrieve:
-            raise exceptions.MethodNotSupported('retrieve')
+            raise exceptions.MethodNotSupported(cls, 'retrieve')
 
-        if path_args:
-            url = cls.base_path % path_args
-        else:
-            url = cls.base_path
-        url = utils.urljoin(url, resource_id)
-        response = session.get(url, service=cls.service)
-        body = response.body
+        url = cls._get_url(path_args, resource_id)
+        response = session.get(url, endpoint_filter=cls.service)
+        body = response.json()
 
         if cls.resource_key:
             body = body[cls.resource_key]
 
         if include_headers:
-            body.update(response.headers)
+            body[HEADERS] = response.headers
 
         return body
 
@@ -434,6 +631,9 @@ class Resource(collections.MutableMapping):
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
+        :param bool include_headers: ``True`` if header data should be
+                                     included in the response body,
+                                     ``False`` if not.
 
         :return: This :class:`Resource` instance.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
@@ -457,22 +657,19 @@ class Resource(collections.MutableMapping):
                                a compound URL.
                                See `How path_args are used`_ for details.
 
-        :return: A ``dict`` representing the headers.
+        :return: A ``dict`` containing the headers.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
                  :data:`Resource.allow_head` is not set to ``True``.
         """
         if not cls.allow_head:
-            raise exceptions.MethodNotSupported('head')
+            raise exceptions.MethodNotSupported(cls, 'head')
 
-        if path_args:
-            url = cls.base_path % path_args
-        else:
-            url = cls.base_path
-        url = utils.urljoin(url, resource_id)
+        url = cls._get_url(path_args, resource_id)
 
-        data = session.head(url, service=cls.service, accept=None).headers
+        headers = {'Accept': ''}
+        resp = session.head(url, endpoint_filter=cls.service, headers=headers)
 
-        return data
+        return {HEADERS: resp.headers}
 
     @classmethod
     def head_by_id(cls, session, resource_id, path_args=None):
@@ -527,24 +724,30 @@ class Resource(collections.MutableMapping):
                  :data:`Resource.allow_update` is not set to ``True``.
         """
         if not cls.allow_update:
-            raise exceptions.MethodNotSupported('update')
+            raise exceptions.MethodNotSupported(cls, 'update')
+
+        # Convert attributes from Resource types into their ids.
+        attrs = cls._convert_ids(attrs)
+        if attrs and cls.id_attribute in attrs:
+            del attrs[cls.id_attribute]
+        headers = attrs.pop(HEADERS, None)
 
         if cls.resource_key:
             body = {cls.resource_key: attrs}
         else:
             body = attrs
 
-        if path_args:
-            url = cls.base_path % path_args
+        url = cls._get_url(path_args, resource_id)
+        args = {'json': body}
+        if headers:
+            args[HEADERS] = headers
+        if cls.patch_update:
+            resp = session.patch(url, endpoint_filter=cls.service, **args)
         else:
-            url = cls.base_path
-        url = utils.urljoin(url, resource_id)
-        if cls.put_update:
-            resp = session.put(url, service=cls.service, json=body).body
-        else:
-            resp = session.patch(url, service=cls.service, json=body).body
+            resp = session.put(url, endpoint_filter=cls.service, **args)
+        resp = resp.json()
 
-        if cls.resource_key:
+        if cls.resource_key and cls.resource_key in resp.keys():
             resp = resp[cls.resource_key]
 
         return resp
@@ -592,14 +795,11 @@ class Resource(collections.MutableMapping):
                  :data:`Resource.allow_delete` is not set to ``True``.
         """
         if not cls.allow_delete:
-            raise exceptions.MethodNotSupported('delete')
+            raise exceptions.MethodNotSupported(cls, 'delete')
 
-        if path_args:
-            url = cls.base_path % path_args
-        else:
-            url = cls.base_path
-        url = utils.urljoin(url, resource_id)
-        session.delete(url, service=cls.service, accept=None)
+        url = cls._get_url(path_args, resource_id)
+        headers = {'Accept': ''}
+        session.delete(url, endpoint_filter=cls.service, headers=headers)
 
     def delete(self, session):
         """Delete the remote resource associated with this instance.
@@ -614,46 +814,46 @@ class Resource(collections.MutableMapping):
         self.delete_by_id(session, self.id, path_args=self)
 
     @classmethod
-    def list(cls, session, limit=None, marker=None, path_args=None, **params):
-        """Get a response that is a list of potentially paginated objects.
+    def list(cls, session, path_args=None, paginated=False, params=None):
+        """This method is a generator which yields resource objects.
 
-        This method starts at ``limit`` and ``marker`` (both defaulting to
-        None), advances the marker to the last item received in each response,
-        and continues making requests for more resources until no results
-        are returned.
+        This resource object list generator handles pagination and takes query
+        params for response filtering.
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
-        :param limit: The maximum amount of results to retrieve.
-                      The default is ``None``, which means no limit will be
-                      set, and the underlying API will return its default
-                      amount of responses.
-        :param marker: The position in the list to begin requests from.
-                       The type of value to use for ``marker`` depends on
-                       the API being called.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
-        :param dict params: Parameters to be passed into the underlying
+        :param bool paginated: ``True`` if a GET to this resource returns
+                               a paginated series of responses, or ``False``
+                               if a GET returns only one page of data.
+                               **When paginated is False only one
+                               page of data will be returned regardless
+                               of the API's support of pagination.**
+        :param dict params: Query parameters to be passed into the underlying
                             :meth:`~openstack.session.Session.get` method.
+                            Values that the server may support include `limit`
+                            and `marker`.
 
         :return: A generator of :class:`Resource` objects.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
                  :data:`Resource.allow_list` is not set to ``True``.
         """
         if not cls.allow_list:
-            raise exceptions.MethodNotSupported('list')
+            raise exceptions.MethodNotSupported(cls, 'list')
 
         more_data = True
-
+        params = {} if params is None else params
+        url = cls._get_url(path_args)
+        headers = {'Accept': 'application/json'}
         while more_data:
-            resp = cls.page(session, limit, marker, path_args, **params)
+            resp = session.get(url, endpoint_filter=cls.service,
+                               headers=headers, params=params)
+            resp = resp.json()
+            if cls.resources_key:
+                resp = resp[cls.resources_key]
 
-            # TODO(briancurtin): Although there are a few different ways
-            # across services, we can know from a response if it's the end
-            # without doing an extra request to get an empty response.
-            # Resources should probably carry something like a `_should_page`
-            # method to handle their service's pagination style.
             if not resp:
                 more_data = False
 
@@ -661,94 +861,151 @@ class Resource(collections.MutableMapping):
             # less than our limit, we don't need to do an extra request
             # to get back an empty data set, which acts as a sentinel.
             yielded = 0
+            new_marker = None
             for data in resp:
                 value = cls.existing(**data)
-                marker = value.id
+                new_marker = value.id
                 yielded += 1
                 yield value
 
-            if limit and yielded < limit:
-                more_data = False
+            if not paginated:
+                return
+            if 'limit' in params and yielded < params['limit']:
+                return
+            params['limit'] = yielded
+            params['marker'] = new_marker
 
     @classmethod
-    def page(cls, session, limit, marker=None, path_args=None, **params):
-        """Get a one page response.
-
-        This method gets starting at ``marker`` with a maximum of ``limit``
-        records.
-
-        :param session: The session to use for making this request.
-        :type session: :class:`~openstack.session.Session`
-        :param limit: The maximum amount of results to retrieve.
-        :param marker: The position in the list to begin requests from.
-                       The type of value to use for ``marker`` depends on
-                       the API being called.
-        :param dict path_args: A dictionary of arguments to construct
-                               a compound URL.
-                               See `How path_args are used`_ for details.
-        :param dict params: Parameters to be passed into the underlying
-                            :meth:`~openstack.session.Session.get` method.
-
-        :return: An array of :class:`Resource` objects.
-        """
-
-        filters = {}
-
-        if limit:
-            filters['limit'] = limit
-        if marker:
-            filters['marker'] = marker
-
-        if path_args:
-            url = cls.base_path % path_args
-        else:
-            url = cls.base_path
-        if filters:
-            url = '%s?%s' % (url, url_parse.urlencode(filters))
-
-        resp = session.get(url, service=cls.service, params=params).body
-
-        if cls.resources_key:
-            resp = resp[cls.resources_key]
-
-        return resp
-
-    @classmethod
-    def find(cls, session, name_or_id, path_args=None):
+    def find(cls, session, name_or_id, path_args=None, ignore_missing=True):
         """Find a resource by its name or id.
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
-        :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+        :param name_or_id: This resource's identifier, if needed by
+                           the request. The default is ``None``.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
 
         :return: The :class:`Resource` object matching the given name or id
                  or None if nothing matches.
+        :raises: :class:`openstack.exceptions.DuplicateResource` if more
+                 than one resource is found for this request.
+        :raises: :class:`openstack.exceptions.ResourceNotFound` if nothing
+                 is found and ignore_missing is ``False``.
         """
+        # Only return one matching resource.
+        def get_one_match(results, the_id, the_name):
+            the_result = None
+            for item in results:
+                maybe_result = cls.existing(**item)
+
+                id_value, name_value = None, None
+                if the_id is not None:
+                    id_value = getattr(maybe_result, the_id, None)
+                if the_name is not None:
+                    name_value = getattr(maybe_result, the_name, None)
+
+                if (id_value == name_or_id) or (name_value == name_or_id):
+                    # Only allow one resource to be found. If we already
+                    # found a match, raise an exception to show it.
+                    if the_result is None:
+                        the_result = maybe_result
+                    else:
+                        msg = "More than one %s exists with the name '%s'."
+                        msg = (msg % (cls.get_resource_name(), name_or_id))
+                        raise exceptions.DuplicateResource(msg)
+
+            return the_result
+
+        # Try to short-circuit by looking directly for a matching ID.
         try:
-            args = {
-                cls.id_attribute: name_or_id,
-                'fields': cls.id_attribute,
-                'path_args': path_args,
-            }
-            info = cls.page(session, limit=2, **args)
-            if len(info) == 1:
-                return cls.existing(**info[0])
-        except exceptions.HttpException:
+            if cls.allow_retrieve:
+                return cls.get_by_id(session, name_or_id, path_args=path_args)
+        except ksa_exceptions.http.NotFound:
             pass
 
-        if cls.name_attribute:
-            params = {cls.name_attribute: name_or_id,
-                      'fields': cls.id_attribute}
-            info = cls.page(session, limit=2, path_args=path_args, **params)
-            if len(info) == 1:
-                return cls.existing(**info[0])
-            if len(info) > 1:
-                msg = "More than one %s exists with the name '%s'."
-                msg = (msg % (cls.get_resource_name(), name_or_id))
-                raise exceptions.DuplicateResource(msg)
+        data = cls.list(session, path_args=path_args)
 
-        return None
+        result = get_one_match(data, cls.id_attribute, cls.name_attribute)
+        if result is not None:
+            return result
+
+        if ignore_missing:
+            return None
+        raise exceptions.ResourceNotFound(
+            "No %s found for %s" % (cls.__name__, name_or_id))
+
+
+def wait_for_status(session, resource, status, failures, interval, wait):
+    """Wait for the resource to be in a particular status.
+
+    :param session: The session to use for making this request.
+    :type session: :class:`~openstack.session.Session`
+    :param resource: The resource to wait on to reach the status. The resource
+                     must have a status attribute.
+    :type resource: :class:`~openstack.resource.Resource`
+    :param status: Desired status of the resource.
+    :param list failures: Statuses that would indicate the transition
+                          failed such as 'ERROR'.
+    :param interval: Number of seconds to wait between checks.
+    :param wait: Maximum number of seconds to wait for transition.
+
+    :return: Method returns self on success.
+    :raises: :class:`~openstack.exceptions.ResourceTimeout` transition
+             to status failed to occur in wait seconds.
+    :raises: :class:`~openstack.exceptions.ResourceFailure` resource
+             transitioned to one of the failure states.
+    :raises: :class:`~AttributeError` if the resource does not have a status
+             attribute
+    """
+    if resource.status == status:
+        return resource
+
+    total_sleep = 0
+    if failures is None:
+        failures = []
+
+    while total_sleep < wait:
+        resource.get(session)
+        if resource.status == status:
+            return resource
+        if resource.status in failures:
+            msg = ("Resource %s transitioned to failure state %s" %
+                   (resource.id, resource.status))
+            raise exceptions.ResourceFailure(msg)
+        time.sleep(interval)
+        total_sleep += interval
+    msg = "Timeout waiting for %s to transition to %s" % (resource.id, status)
+    raise exceptions.ResourceTimeout(msg)
+
+
+def wait_for_delete(session, resource, interval, wait):
+    """Wait for the resource to be deleted.
+
+    :param session: The session to use for making this request.
+    :type session: :class:`~openstack.session.Session`
+    :param resource: The resource to wait on to be deleted.
+    :type resource: :class:`~openstack.resource.Resource`
+    :param interval: Number of seconds to wait between checks.
+    :param wait: Maximum number of seconds to wait for the delete.
+
+    :return: Method returns self on success.
+    :raises: :class:`~openstack.exceptions.ResourceTimeout` transition
+             to status failed to occur in wait seconds.
+    """
+    total_sleep = 0
+    while total_sleep < wait:
+        try:
+            resource.get(session)
+        except ksa_exceptions.http.NotFound:
+            return resource
+        time.sleep(interval)
+        total_sleep += interval
+    msg = "Timeout waiting for %s delete" % (resource.id)
+    raise exceptions.ResourceTimeout(msg)

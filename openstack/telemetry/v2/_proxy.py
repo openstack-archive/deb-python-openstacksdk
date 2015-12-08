@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from openstack import proxy
 from openstack.telemetry.v2 import alarm
 from openstack.telemetry.v2 import alarm_change
 from openstack.telemetry.v2 import capability
@@ -19,67 +20,269 @@ from openstack.telemetry.v2 import sample
 from openstack.telemetry.v2 import statistics
 
 
-class Proxy(object):
+class Proxy(proxy.BaseProxy):
 
-    def __init__(self, session):
-        self.session = session
+    def create_alarm(self, **attrs):
+        """Create a new alarm from attributes
 
-    def create_alarm(self, **data):
-        return alarm.Alarm(data).create(self.session)
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.telemetry.v2.alarm.Alarm`,
+                           comprised of the properties on the Alarm class.
 
-    def delete_alarm(self, **data):
-        alarm.Alarm(data).delete(self.session)
+        :returns: The results of alarm creation
+        :rtype: :class:`~openstack.telemetry.v2.alarm.Alarm`
+        """
+        return self._create(alarm.Alarm, **attrs)
 
-    def find_alarm(self, name_or_id):
-        return alarm.Alarm.find(self.session, name_or_id)
+    def delete_alarm(self, value, ignore_missing=True):
+        """Delete an alarm
 
-    def get_alarm(self, **data):
-        return alarm.Alarm(data).get(self.session)
+        :param value: The value can be either the ID of an alarm or a
+                      :class:`~openstack.telemetry.v2.alarm.Alarm` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the alarm does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent alarm.
 
-    def list_alarms(self):
-        return alarm.Alarm.list(self.session)
+        :returns: ``None``
+        """
+        self._delete(alarm.Alarm, value, ignore_missing=ignore_missing)
 
-    def update_alarm(self, **data):
-        return alarm.Alarm(data).update(self.session)
+    def find_alarm(self, name_or_id, ignore_missing=True):
+        """Find a single alarm
 
-    def find_alarm_change(self, name_or_id):
-        return alarm_change.AlarmChange.find(self.session, name_or_id)
+        :param name_or_id: The name or ID of a alarm.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.alarm.Alarm` or None
+        """
+        return self._find(alarm.Alarm, name_or_id,
+                          ignore_missing=ignore_missing)
 
-    def list_alarm_changes(self):
-        return alarm_change.AlarmChange.list(self.session)
+    def get_alarm(self, value):
+        """Get a single alarm
 
-    def find_capability(self, name_or_id):
-        return capability.Capability.find(self.session, name_or_id)
+        :param value: The value can be the ID of an alarm or a
+                      :class:`~openstack.telemetry.v2.alarm.Alarm` instance.
 
-    def list_capabilitys(self):
-        return capability.Capability.list(self.session)
+        :returns: One :class:`~openstack.telemetry.v2.alarm.Alarm`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(alarm.Alarm, value)
 
-    def find_meter(self, name_or_id):
-        return meter.Meter.find(self.session, name_or_id)
+    def alarms(self, **query):
+        """Return a generator of alarms
 
-    def list_meters(self):
-        return meter.Meter.list(self.session)
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
 
-    def find_resource(self, name_or_id):
-        return resource.Resource.find(self.session, name_or_id)
+        :returns: A generator of alarm objects
+        :rtype: :class:`~openstack.telemetry.v2.alarm.Alarm`
+        """
+        return self._list(alarm.Alarm, paginated=False, **query)
 
-    def get_resource(self, **data):
-        return resource.Resource(data).get(self.session)
+    def update_alarm(self, value, **attrs):
+        """Update a alarm
 
-    def list_resources(self):
-        return resource.Resource.list(self.session)
+        :param value: Either the id of a alarm or a
+                      :class:`~openstack.telemetry.v2.alarm.Alarm` instance.
+        :attrs kwargs: The attributes to update on the alarm represented
+                       by ``value``.
 
-    def create_sample(self, **data):
-        return sample.Sample(data).create(self.session)
+        :returns: The updated alarm
+        :rtype: :class:`~openstack.telemetry.v2.alarm.Alarm`
+        """
+        return self._update(alarm.Alarm, value, **attrs)
 
-    def find_sample(self, name_or_id):
-        return sample.Sample.find(self.session, name_or_id)
+    def find_alarm_change(self, name_or_id, ignore_missing=True):
+        """Find a single alarm change
 
-    def list_samples(self):
-        return sample.Sample.list(self.session)
+        :param name_or_id: The name or ID of a alarm change.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.alarm_change.AlarmChange`
+                  or None
+        """
+        return self._find(alarm_change.AlarmChange, name_or_id,
+                          ignore_missing=ignore_missing)
 
-    def find_statistics(self, name_or_id):
-        return statistics.Statistics.find(self.session, name_or_id)
+    def alarm_changes(self, value, **query):
+        """Return a generator of alarm changes
 
-    def list_statistics(self):
-        return statistics.Statistics.list(self.session)
+        :param value: Alarm resource or id for alarm.
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of alarm change objects
+        :rtype: :class:`~openstack.telemetry.v2.alarm_change.AlarmChange`
+        """
+        alarm_id = alarm.Alarm.from_id(value).id
+        return self._list(alarm_change.AlarmChange, paginated=False,
+                          path_args={'alarm_id': alarm_id}, **query)
+
+    def find_capability(self, name_or_id, ignore_missing=True):
+        """Find a single capability
+
+        :param name_or_id: The name or ID of a capability.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.capability.Capability`
+                  or None
+        """
+        return self._find(capability.Capability, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def capabilities(self, **query):
+        """Return a generator of capabilities
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of capability objects
+        :rtype: :class:`~openstack.telemetry.v2.capability.Capability`
+        """
+        return self._list(capability.Capability, paginated=False, **query)
+
+    def find_meter(self, name_or_id, ignore_missing=True):
+        """Find a single meter
+
+        :param name_or_id: The name or ID of a meter.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.meter.Meter` or None
+        """
+        return self._find(meter.Meter, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def meters(self, **query):
+        """Return a generator of meters
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of meter objects
+        :rtype: :class:`~openstack.telemetry.v2.meter.Meter`
+        """
+        return self._list(meter.Meter, paginated=False, **query)
+
+    def find_resource(self, name_or_id, ignore_missing=True):
+        """Find a single resource
+
+        :param name_or_id: The name or ID of a resource.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.resource.Resource` or
+                  None
+        """
+        return self._find(resource.Resource, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_resource(self, value):
+        """Get a single resource
+
+        :param value: The value can be the ID of a resource or a
+                      :class:`~openstack.telemetry.v2.resource.Resource`
+                      instance.
+
+        :returns: One :class:`~openstack.telemetry.v2.resource.Resource`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(resource.Resource, value)
+
+    def resources(self, **query):
+        """Return a generator of resources
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of resource objects
+        :rtype: :class:`~openstack.telemetry.v2.resource.Resource`
+        """
+        return self._list(resource.Resource, paginated=False, **query)
+
+    def create_sample(self, **attrs):
+        """Create a new sample from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.telemetry.v2.sample.Sample`,
+                           comprised of the properties on the Sample class.
+
+        :returns: The results of sample creation
+        :rtype: :class:`~openstack.telemetry.v2.sample.Sample`
+        """
+        return self._create(sample.Sample, **attrs)
+
+    def find_sample(self, name_or_id, ignore_missing=True):
+        """Find a single sample
+
+        :param name_or_id: The name or ID of a sample.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.sample.Sample` or None
+        """
+        return self._find(sample.Sample, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def samples(self, value, **query):
+        """Return a generator of samples
+
+        :param value: Meter resource or name for a meter.
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of sample objects
+        :rtype: :class:`~openstack.telemetry.v2.sample.Sample`
+        """
+        meter_name = meter.Meter.from_name(value).name
+        return self._list(sample.Sample, paginated=False,
+                          path_args={'counter_name': meter_name}, **query)
+
+    def find_statistics(self, name_or_id, ignore_missing=True):
+        """Find a single statistics
+
+        :param name_or_id: The name or ID of a statistics.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.telemetry.v2.statistics.Statistics`
+                  or None
+        """
+        return self._find(statistics.Statistics, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def statistics(self, value, **query):
+        """Return a generator of statistics
+
+        :param value: Meter resource or name for a meter.
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of statistics objects
+        :rtype: :class:`~openstack.telemetry.v2.statistics.Statistics`
+        """
+        meter_name = meter.Meter.from_name(value).name
+        return self._list(statistics.Statistics, paginated=False,
+                          path_args={'meter_name': meter_name}, **query)

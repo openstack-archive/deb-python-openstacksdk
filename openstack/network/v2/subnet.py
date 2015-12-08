@@ -26,16 +26,33 @@ class Subnet(resource.Resource):
     allow_update = True
     allow_delete = True
     allow_list = True
-    put_update = True
 
     # Properties
+    #: The start and end addresses for the allocation pools.
     allocation_pools = resource.prop('allocation_pools')
+    #: The CIDR.
     cidr = resource.prop('cidr')
+    #: A list of DNS nameservers.
     dns_nameservers = resource.prop('dns_nameservers')
+    #: Set to ``True`` if DHCP is enabled and ``False`` if DHCP is disabled.
+    #: *Type: bool*
     enable_dhcp = resource.prop('enable_dhcp', type=bool)
+    #: The gateway IP address.
     gateway_ip = resource.prop('gateway_ip')
+    #: A list of host routes.
     host_routes = resource.prop('host_routes')
+    #: The IP version, which is ``4`` or ``6``.
     ip_version = resource.prop('ip_version')
+
+    #: The IPv6 address modes which are 'dhcpv6-stateful', 'dhcpv6-stateless',
+    #: or 'SLAAC'
+    ipv6_address_mode = resource.prop('ipv6_address_mode')
+    #: The IPv6 router advertisements modes
+    ipv6_ra_mode = resource.prop('ipv6_ra_mode')
+
+    #: The subnet name.
     name = resource.prop('name')
+    #: The ID of the attached network.
     network_id = resource.prop('network_id')
+    #: The project this subnet is associated with.
     project_id = resource.prop('tenant_id')

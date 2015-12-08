@@ -12,9 +12,11 @@
 
 from openstack.orchestration import orchestration_service
 from openstack import resource
+from openstack import utils
 
 
 class Stack(resource.Resource):
+    name_attribute = 'stack_name'
     resource_key = 'stack'
     resources_key = 'stacks'
     base_path = '/stacks'
@@ -22,21 +24,73 @@ class Stack(resource.Resource):
 
     # capabilities
     # NOTE(thowe): Special handling for other operations
+    allow_create = True
     allow_list = True
     allow_retrieve = True
+    allow_update = True
+    allow_delete = True
 
     # Properties
     name = resource.prop('stack_name')
+    #: Placeholder for AWS compatible template listing capabilities
+    #: required by the stack.
     capabilities = resource.prop('capabilities')
-    creation_time = resource.prop('creation_time')
+    #: Timestamp of the stack creation.
+    created_at = resource.prop('creation_time')
+    #: A text decription of the stack.
     description = resource.prop('description')
+    #: Whether the stack will support a rollback operation on stack
+    #: create/update failures.
     disable_rollback = resource.prop('disable_rollback', type=bool)
+    #: A list of dictionaris containing links relevant to the stack.
     links = resource.prop('links')
+    #: Placeholder for future extensions where stack related events
+    #: can be published.
     notification_topics = resource.prop('notification_topics')
+    #: A dictionary containing output keys and values from the stack, if any.
     outputs = resource.prop('outputs')
+    #: A ditionary containing the parameter names and values for the stack.
     parameters = resource.prop('parameters', type=dict)
-    stack_status = resource.prop('stack_status')
-    stack_status_reason = resource.prop('stack_status_reason')
+    #: A string representation of the stack status, e.g. ``CREATE_COMPLETED``.
+    status = resource.prop('stack_status')
+    #: A text explaining how the stack transits to its current status.
+    status_reason = resource.prop('stack_status_reason')
+    #: Stack template description text. Currently contains the same text
+    #: as that of the ``description`` property.
     template_description = resource.prop('template_description')
+    #: A URL (i.e. HTTP or HTTPS) where stack template can be retrieved.
+    template_url = resource.prop('template_url')
+    #: Stack operation timeout in minutes.
     timeout_mins = resource.prop('timeout_mins')
-    updated_time = resource.prop('updated_time')
+    #: Timestamp of last update on the stack.
+    updated_at = resource.prop('updated_time')
+
+    def _action(self, session, body):
+        """Perform stack actions"""
+        url = utils.urljoin(self.base_path, self.id, 'actions')
+        resp = session.post(url, endpoint_filter=self.service, json=body)
+        return resp.json()
+
+    def check(self, session):
+        return self._action(session, {'check': ''})
+
+    @classmethod
+    def create_by_id(cls, session, attrs, resource_id=None, path_args=None):
+        body = attrs.copy()
+        body.pop('id', None)
+        body.pop('name', None)
+        url = cls.base_path
+        resp = session.post(url, endpoint_filter=cls.service, json=body)
+        resp = resp.json()
+        return resp[cls.resource_key]
+
+    @classmethod
+    def update_by_id(cls, session, resource_id, attrs, path_args=None):
+        # Heat returns a 202 for update operation, we ignore the non-existent
+        # response.body and do an additional get
+        body = attrs.copy()
+        body.pop('id', None)
+        body.pop('name', None)
+        url = cls._get_url(path_args, resource_id)
+        session.put(url, endpoint_filter=cls.service, json=body)
+        return cls.get_by_id(session, resource_id)

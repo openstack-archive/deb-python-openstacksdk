@@ -27,17 +27,22 @@ class ServerIP(resource.Resource):
     allow_list = True
 
     # Properties
+    #: The IP address. The format of the address depends on :attr:`version`
     addr = resource.prop('addr')
+    #: The network label, such as public or private.
     network_label = resource.prop('network_label')
+    #: The UUID for the server.
     server_id = resource.prop('server_id')
+    # Version of the IP protocol. Currently either 4 or 6.
     version = resource.prop('version')
 
     @classmethod
     def list(cls, session, path_args=None, **params):
-        url = cls.base_path % path_args
-        resp = session.get(url, service=cls.service, params=params)
+        url = cls._get_url(path_args)
+        resp = session.get(url, endpoint_filter=cls.service, params=params)
+        resp = resp.json()
         ray = []
-        for network_label, addresses in six.iteritems(resp.body['addresses']):
+        for network_label, addresses in six.iteritems(resp['addresses']):
             for address in addresses:
                 record = {
                     'server_id': path_args['server_id'],

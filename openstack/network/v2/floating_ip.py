@@ -15,8 +15,7 @@ from openstack import resource
 
 
 class FloatingIP(resource.Resource):
-    id_attribute = "floating_ip_address"
-    name_attribute = None
+    name_attribute = "floating_ip_address"
     resource_name = "floating ip"
     resource_key = 'floatingip'
     resources_key = 'floatingips'
@@ -29,23 +28,33 @@ class FloatingIP(resource.Resource):
     allow_update = True
     allow_delete = True
     allow_list = True
-    put_update = True
 
     # Properties
+    #: The fixed IP address associated with the floating IP. If you
+    #: intend to associate the floating IP with a fixed IP at creation
+    #: time, then you must indicate the identifier of the internal port.
+    #: If an internal port has multiple associated IP addresses, the
+    #: service chooses the first IP unless you explicitly specify the
+    #: parameter fixed_ip_address to select a specific IP.
     fixed_ip_address = resource.prop('fixed_ip_address')
+    #: The floating IP address.
     floating_ip_address = resource.prop('floating_ip_address')
+    #: The ID of the network associated with the floating IP.
     floating_network_id = resource.prop('floating_network_id')
+    #: The port ID.
     port_id = resource.prop('port_id')
+    #: The project this floating IP is associated with.
     project_id = resource.prop('tenant_id')
+    #: The ID of an associated router.
     router_id = resource.prop('router_id')
 
     @classmethod
     def find_available(cls, session):
-        args = {
+        params = {
             'port_id': '',
             'fields': cls.id_attribute,
         }
-        info = cls.list(session, **args)
+        info = cls.list(session, params=params)
         try:
             return next(info)
         except StopIteration:

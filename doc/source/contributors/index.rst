@@ -38,12 +38,24 @@ Development Environment
 
 The first step towards contributing code and documentation is to setup your
 development environment. We use a pretty standard setup, but it is fully
-documented in our `setup <setup>`_ section.
+documented in our :doc:`setup <setup>` section.
 
 .. toctree::
    :maxdepth: 2
 
    setup
+
+Testing
+-------
+
+The project contains two test packages, one for unit tests and one for
+functional tests. The ``openstack.tests.unit`` package tests the SDK's
+features in isolation. The ``openstack.tests.functional`` package tests
+the SDK's features against an OpenStack cloud.
+
+.. toctree::
+
+   testing
 
 Project Layout
 --------------

@@ -19,14 +19,22 @@ class Extension(resource.Resource):
     resources_key = 'extensions'
     base_path = '/extensions'
     service = network_service.NetworkService()
+    id_attribute = "alias"
 
     # capabilities
+    allow_retrieve = True
     allow_list = True
 
     # Properties
+    #: An alias the extension is known under.
     alias = resource.prop('alias')
+    #: Text describing what the extension does.
     description = resource.prop('description')
+    #: Links pertaining to this extension.
     links = resource.prop('links')
+    #: The name of this extension.
     name = resource.prop('name')
+    #: A URL pointing to the namespace for this extension.
     namespace = resource.prop('namespace')
+    #: Timestamp when the extension was last updated.
     updated = resource.prop('updated')

@@ -27,12 +27,17 @@ class SecurityGroup(resource.Resource):
     allow_update = True
     allow_delete = True
     allow_list = True
-    put_update = True
 
     # Properties
+    #: The security group description.
     description = resource.prop('description')
+    #: The security group name.
     name = resource.prop('name')
+    #: The project this security group is associated with.
     project_id = resource.prop('tenant_id')
+    #: A list of
+    #: :class:`~openstack.network.v2.security_group_rule.SecurityGroupRule`
+    #: objects. *Type: list*
     security_group_rules = resource.prop('security_group_rules')
 
     def __init__(self, attrs=None, loaded=False):

@@ -26,9 +26,11 @@ class MeteringLabel(resource.Resource):
     allow_update = True
     allow_delete = True
     allow_list = True
-    put_update = True
 
     # Properties
+    #: Description of the label.
     description = resource.prop('description')
+    #: Name of the label.
     name = resource.prop('name')
+    #: Project this label is associated with.
     project_id = resource.prop('tenant_id')
