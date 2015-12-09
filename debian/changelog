@@ -1,6 +1,6 @@
 python-openstacksdk (0.7.1-2) UNRELEASED; urgency=medium
 
-  * Only run unit tests, nothing else.
+  * Removed intersphinx module.
 
  -- Thomas Goirand <zigo@debian.org>  Wed, 09 Dec 2015 11:09:29 +0100
 
