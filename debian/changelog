@@ -5,6 +5,7 @@ python-openstacksdk (0.7.1-2) UNRELEASED; urgency=medium
 
   [ Corey Bryant ]
   * d/rules: Run py3 tests.
+  * d/watch: Updated to get tarball from github.
 
  -- Corey Bryant <corey.bryant@canonical.com>  Wed, 16 Dec 2015 09:19:48 -0500
 
