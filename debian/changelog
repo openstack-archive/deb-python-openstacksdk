@@ -1,4 +1,4 @@
-python-openstacksdk (0.7.1-2) UNRELEASED; urgency=medium
+python-openstacksdk (0.7.1-2) experimental; urgency=medium
 
   [ Thomas Goirand ]
   * Removed intersphinx module.
