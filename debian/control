@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 9),
 Build-Depends-Indep: python-coverage (>= 3.6),
                      python-fixtures (>= 1.3.1),
                      python-hacking,
-                     python-keystoneauth1 (>= 1.1.0),
+                     python-keystoneauth1 (>= 2.1.0),
                      python-mock (>= 1.3),
                      python-os-client-config (>= 1.6.0),
                      python-os-testr (>= 0.4.1),
@@ -30,7 +30,7 @@ Build-Depends-Indep: python-coverage (>= 3.6),
                      python-testtools (>= 1.4.0),
                      python3-fixtures (>= 0.3.14),
                      python3-httpretty (>= 0.8.0),
-                     python3-keystoneauth1 (>= 1.1.0),
+                     python3-keystoneauth1 (>= 2.1.0),
                      python3-mock (>= 1.0),
                      python3-os-client-config (>= 1.6.0),
                      python3-os-testr (>= 0.4.1),
@@ -51,7 +51,7 @@ Homepage: https://github.com/stackforge/python-openstacksdk
 
 Package: python-openstacksdk
 Architecture: all
-Depends: python-keystoneauth1 (>= 1.1.0),
+Depends: python-keystoneauth1 (>= 2.1.0),
          python-os-client-config (>= 1.6.0),
          python-oslo.utils (>= 3.0.0),
          python-pbr (>= 1.8),
@@ -75,7 +75,7 @@ Description: SDK for building applications to work with OpenStack - Python 2.x
 
 Package: python3-openstacksdk
 Architecture: all
-Depends: python3-keystoneauth1 (>= 1.1.0),
+Depends: python3-keystoneauth1 (>= 2.1.0),
          python3-os-client-config (>= 1.6.0),
          python3-oslo.utils (>= 3.0.0),
          python3-pbr (>= 1.8),
