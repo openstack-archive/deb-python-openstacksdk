@@ -11,6 +11,7 @@
 # under the License.
 
 from openstack.cluster import cluster_service
+from openstack.cluster.v1 import profile as _profile
 from openstack import resource
 from openstack import utils
 
@@ -27,12 +28,13 @@ class Cluster(resource.Resource):
     allow_update = True
     allow_delete = True
     allow_list = True
+    patch_update = True
 
     # Properties
     #: The name of the cluster.
     name = resource.prop('name')
     #: The ID of the profile used by this cluster.
-    profile_id = resource.prop('profile_id')
+    profile = resource.prop('profile_id', type=_profile.Profile)
     #: The ID of the user who created this cluster, thus the owner of it.
     user = resource.prop('user')
     #: The ID of the project this cluster belongs to.
@@ -41,13 +43,12 @@ class Cluster(resource.Resource):
     domain = resource.prop('domain')
     #: The ID of the parent cluster (if any).
     parent = resource.prop('parent')
+    #: Timestamp of when the cluster was initialized.
+    init_at = resource.prop('init_at')
     #: Timestamp of when the cluster was created.
-    created_at = resource.prop('created_time')
+    created_at = resource.prop('created_at')
     #: Timestamp of when the cluster was last updated.
-    updated_at = resource.prop('updated_time')
-    #: Timestamp of when the cluster was deleted. This is only used on
-    #: clusters that were soft-deleted.
-    deleted_at = resource.prop('deleted_time')
+    updated_at = resource.prop('updated_at')
     #: Lower bound (inclusive) for the size of the cluster.
     min_size = resource.prop('min_size', type=int)
     #: Upper bound (inclusive) for the size of the cluster. A value of
@@ -72,8 +73,8 @@ class Cluster(resource.Resource):
     profile_name = resource.prop('profile_name')
 
     def action(self, session, body):
-        url = utils.urljoin(self.base_path, self.id, 'action')
-        resp = session.put(url, endpoint_filter=self.service, json=body)
+        url = utils.urljoin(self.base_path, self.id, 'actions')
+        resp = session.post(url, endpoint_filter=self.service, json=body)
         return resp.json()
 
     def add_nodes(self, session, nodes):
@@ -84,7 +85,7 @@ class Cluster(resource.Resource):
         }
         return self.action(session, body)
 
-    def delete_nodes(self, session, nodes):
+    def del_nodes(self, session, nodes):
         body = {
             'del_nodes': {
                 'nodes': nodes,
@@ -108,16 +109,17 @@ class Cluster(resource.Resource):
         }
         return self.action(session, body)
 
-    def policy_attach(self, session, policy_id, priority, level, cooldown,
-                      enabled):
+    def resize(self, session, **params):
         body = {
-            'policy_attach': {
-                'policy_id': policy_id,
-                'priority': priority,
-                'level': level,
-                'cooldown': cooldown,
-                'enabled': enabled,
-            }
+            'resize': params
+        }
+        return self.action(session, body)
+
+    def policy_attach(self, session, policy_id, **params):
+        data = {'policy_id': policy_id}
+        data.update(params)
+        body = {
+            'policy_attach': data
         }
         return self.action(session, body)
 
@@ -129,39 +131,10 @@ class Cluster(resource.Resource):
         }
         return self.action(session, body)
 
-    def policy_update(self, session, policy_id, priority, level, cooldown,
-                      enabled):
-
+    def policy_update(self, session, policy_id, **params):
+        data = {'policy_id': policy_id}
+        data.update(params)
         body = {
-            'policy_update': {
-                'policy_id': policy_id,
-            }
-        }
-        if priority is not None:
-            body['policy_update']['priority'] = priority
-        if level is not None:
-            body['policy_update']['level'] = level
-        if cooldown is not None:
-            body['policy_update']['cooldown'] = cooldown
-        if enabled is not None:
-            body['policy_update']['enabled'] = enabled
-
-        return self.action(session, body)
-
-    def policy_enable(self, session, policy_id):
-        body = {
-            'policy_update': {
-                'policy_id': policy_id,
-                'enabled': True,
-            }
-        }
-        return self.action(session, body)
-
-    def policy_disable(self, session, policy_id):
-        body = {
-            'policy_update': {
-                'policy_id': policy_id,
-                'enabled': False,
-            }
+            'policy_update': data
         }
         return self.action(session, body)

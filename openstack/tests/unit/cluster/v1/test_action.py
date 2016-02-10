@@ -34,16 +34,15 @@ FAKE = {
     'outputs': {},
     'depends_on': [],
     'depended_by': [],
-    'created_time': '2015-10-10T04:46:36.000000',
-    'updated_time': None,
-    'deleted_time': None,
+    'created_at': '2015-10-10T04:46:36.000000',
+    'updated_at': None,
 }
 
 
-class TestCluster(testtools.TestCase):
+class TestAction(testtools.TestCase):
 
     def setUp(self):
-        super(TestCluster, self).setUp()
+        super(TestAction, self).setUp()
 
     def test_basic(self):
         sot = action.Action()
@@ -72,6 +71,5 @@ class TestCluster(testtools.TestCase):
         self.assertEqual(FAKE['outputs'], sot.outputs)
         self.assertEqual(FAKE['depends_on'], sot.depends_on)
         self.assertEqual(FAKE['depended_by'], sot.depended_by)
-        self.assertEqual(FAKE['created_time'], sot.created_at)
-        self.assertEqual(FAKE['updated_time'], sot.updated_at)
-        self.assertEqual(FAKE['deleted_time'], sot.deleted_at)
+        self.assertEqual(FAKE['created_at'], sot.created_at)
+        self.assertEqual(FAKE['updated_at'], sot.updated_at)

@@ -10,7 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import mock
 import testtools
 
 from openstack.cluster.v1 import node
@@ -35,9 +34,8 @@ FAKE_CREATE_RESP = {
         'name': FAKE_NAME,
         'cluster_id': '99001122-aabb-ccdd-ffff-efdcab124567',
         'action': '1122aabb-eeff-7755-2222-00991234dcba',
-        'created_time': None,
-        'deleted_time': None,
-        'updated_time': None,
+        'created_at': None,
+        'updated_at': None,
         'data': {},
         'role': 'master',
         'index': 1,
@@ -80,33 +78,3 @@ class TestNode(testtools.TestCase):
         self.assertEqual(FAKE['index'], sot.index)
         self.assertEqual(FAKE['role'], sot.role)
         self.assertEqual(FAKE['metadata'], sot.metadata)
-
-    def test_join(self):
-        sot = node.Node(FAKE)
-        sot['id'] = 'IDENTIFIER'
-
-        resp = mock.Mock()
-        resp.body = {'action': '1234-5678-abcd'}
-        resp.json = mock.Mock(return_value=resp.body)
-        sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual(resp.body, sot.join(sess, 'cluster-b'))
-        url = 'nodes/%s/action' % sot.id
-        body = {'join': {'cluster_id': 'cluster-b'}}
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
-
-    def test_leave(self):
-        sot = node.Node(FAKE)
-        sot['id'] = 'IDENTIFIER'
-
-        resp = mock.Mock()
-        resp.body = {'action': '2345-6789-bbbb'}
-        resp.json = mock.Mock(return_value=resp.body)
-        sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual(resp.body, sot.leave(sess))
-        url = 'nodes/%s/action' % sot.id
-        body = {'leave': {}}
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)

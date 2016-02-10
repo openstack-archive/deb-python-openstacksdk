@@ -13,6 +13,7 @@
 import mock
 
 from openstack.network.v2 import _proxy
+from openstack.network.v2 import availability_zone
 from openstack.network.v2 import extension
 from openstack.network.v2 import floating_ip
 from openstack.network.v2 import health_monitor
@@ -29,6 +30,7 @@ from openstack.network.v2 import router
 from openstack.network.v2 import security_group
 from openstack.network.v2 import security_group_rule
 from openstack.network.v2 import subnet
+from openstack.network.v2 import subnet_pool
 from openstack.network.v2 import vpn_service
 from openstack.tests.unit import test_proxy_base
 
@@ -37,6 +39,11 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
     def setUp(self):
         super(TestNetworkProxy, self).setUp()
         self.proxy = _proxy.Proxy(self.session)
+
+    def test_availability_zones(self):
+        self.verify_list_no_kwargs(self.proxy.availability_zones,
+                                   availability_zone.AvailabilityZone,
+                                   paginated=False)
 
     def test_extension_find(self):
         self.verify_find(self.proxy.find_extension, extension.Extension)
@@ -310,8 +317,20 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
     def test_port_update(self):
         self.verify_update(self.proxy.update_port, port.Port)
 
+    def test_quota_delete(self):
+        self.verify_delete(self.proxy.delete_quota, quota.Quota, False)
+
+    def test_quota_delete_ignore(self):
+        self.verify_delete(self.proxy.delete_quota, quota.Quota, True)
+
+    def test_quota_get(self):
+        self.verify_get(self.proxy.get_quota, quota.Quota)
+
     def test_quotas(self):
         self.verify_list(self.proxy.quotas, quota.Quota, paginated=False)
+
+    def test_quota_update(self):
+        self.verify_update(self.proxy.update_quota, quota.Quota)
 
     def test_router_create_attrs(self):
         self.verify_create(self.proxy.create_router, router.Router)
@@ -449,6 +468,35 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
 
     def test_subnet_update(self):
         self.verify_update(self.proxy.update_subnet, subnet.Subnet)
+
+    def test_subnet_pool_create_attrs(self):
+        self.verify_create(self.proxy.create_subnet_pool,
+                           subnet_pool.SubnetPool)
+
+    def test_subnet_pool_delete(self):
+        self.verify_delete(self.proxy.delete_subnet_pool,
+                           subnet_pool.SubnetPool, False)
+
+    def test_subnet_pool_delete_ignore(self):
+        self.verify_delete(self.proxy.delete_subnet_pool,
+                           subnet_pool.SubnetPool, True)
+
+    def test_subnet_pool_find(self):
+        self.verify_find(self.proxy.find_subnet_pool,
+                         subnet_pool.SubnetPool)
+
+    def test_subnet_pool_get(self):
+        self.verify_get(self.proxy.get_subnet_pool,
+                        subnet_pool.SubnetPool)
+
+    def test_subnet_pools(self):
+        self.verify_list(self.proxy.subnet_pools,
+                         subnet_pool.SubnetPool,
+                         paginated=False)
+
+    def test_subnet_pool_update(self):
+        self.verify_update(self.proxy.update_subnet_pool,
+                           subnet_pool.SubnetPool)
 
     def test_vpn_service_create_attrs(self):
         self.verify_create(self.proxy.create_vpn_service,

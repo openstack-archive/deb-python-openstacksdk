@@ -11,9 +11,12 @@
 # under the License.
 
 import mock
+import six
 import testtools
 
+from openstack import exceptions
 from openstack.orchestration.v1 import stack
+from openstack import resource
 
 
 FAKE_ID = 'ce8ae86c-9810-4cb1-8888-7fb53bc523bf'
@@ -83,16 +86,34 @@ class TestStack(testtools.TestCase):
         self.assertEqual(FAKE['updated_time'], sot.updated_at)
 
     def test_create(self):
-        resp = mock.MagicMock()
+        resp = mock.Mock()
         resp.json = mock.Mock(return_value=FAKE_CREATE_RESPONSE)
         sess = mock.Mock()
-        sess.post = mock.MagicMock()
-        sess.post.return_value = resp
+        sess.post = mock.Mock(return_value=resp)
         sot = stack.Stack(FAKE)
 
         sot.create(sess)
 
         url = '/stacks'
+        body = sot._attrs.copy()
+        body.pop('id', None)
+        body.pop('name', None)
+        sess.post.assert_called_with(url, endpoint_filter=sot.service,
+                                     json=body)
+        self.assertEqual(FAKE_ID, sot.id)
+        self.assertEqual(FAKE_NAME, sot.name)
+
+    def test_preview(self):
+        resp = mock.Mock()
+        resp.json = mock.Mock(return_value=FAKE_CREATE_RESPONSE)
+        sess = mock.Mock()
+        sess.post = mock.Mock(return_value=resp)
+        attrs = FAKE.copy()
+        sot = stack.StackPreview(attrs)
+
+        sot.create(sess)
+
+        url = '/stacks/preview'
         body = sot._attrs.copy()
         body.pop('id', None)
         body.pop('name', None)
@@ -130,9 +151,49 @@ class TestStack(testtools.TestCase):
         self.assertEqual(sot, resp)
 
     def test_check(self):
-        session_mock = mock.MagicMock()
+        session_mock = mock.Mock()
         sot = stack.Stack(FAKE)
-        sot._action = mock.MagicMock()
+        sot._action = mock.Mock()
         body = {'check': ''}
         sot.check(session_mock)
         sot._action.assert_called_with(session_mock, body)
+
+    @mock.patch.object(resource.Resource, 'find')
+    def test_find(self, mock_find):
+        sess = mock.Mock()
+        sot = stack.Stack(FAKE)
+        deleted_stack = mock.Mock(status='DELETE_COMPLETE')
+        normal_stack = mock.Mock(status='CREATE_COMPLETE')
+        mock_find.side_effect = [
+            None,
+            normal_stack,
+            deleted_stack,
+            deleted_stack,
+        ]
+
+        self.assertIsNone(sot.find(sess, 'fake_name'))
+        self.assertEqual(normal_stack, sot.find(sess, 'fake_name'))
+        self.assertIsNone(sot.find(sess, 'fake_name', ignore_missing=True))
+        ex = self.assertRaises(exceptions.ResourceNotFound, sot.find,
+                               sess, 'fake_name', ignore_missing=False)
+        self.assertEqual('ResourceNotFound: No stack found for fake_name',
+                         six.text_type(ex))
+
+    @mock.patch.object(resource.Resource, 'get')
+    def test_get(self, mock_get):
+        sess = mock.Mock()
+        sot = stack.Stack(FAKE)
+        deleted_stack = mock.Mock(id=FAKE_ID, status='DELETE_COMPLETE')
+        normal_stack = mock.Mock(status='CREATE_COMPLETE')
+        mock_get.side_effect = [
+            normal_stack,
+            exceptions.NotFoundException(message='oops'),
+            deleted_stack,
+        ]
+
+        self.assertEqual(normal_stack, sot.get(sess))
+        ex = self.assertRaises(exceptions.NotFoundException, sot.get, sess)
+        self.assertEqual('NotFoundException: oops', six.text_type(ex))
+        ex = self.assertRaises(exceptions.NotFoundException, sot.get, sess)
+        self.assertEqual('NotFoundException: No stack found for %s' % FAKE_ID,
+                         six.text_type(ex))

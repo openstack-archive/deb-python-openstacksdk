@@ -34,16 +34,11 @@ class Profile(resource.Resource):
     name = resource.prop('name')
     #: The type of the profile.
     type_name = resource.prop('type')
-    #: The permission string of the profile.
-    permission = resource.prop('permission')
     #: The spec of the profile.
     spec = resource.prop('spec', type=dict)
     #: A collection of key-value pairs that are attached to the profile.
     metadata = resource.prop('metadata', type=dict)
     #: Timestamp of when the profile was created.
-    created_at = resource.prop('created_time')
+    created_at = resource.prop('created_at')
     #: Timestamp of when the profile was last updated.
-    updated_at = resource.prop('updated_time')
-    #: Timestamp of when the profile was deleted. This is only used on
-    #: profiles that were soft-deleted.
-    deleted_at = resource.prop('deleted_time')
+    updated_at = resource.prop('updated_at')

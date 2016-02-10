@@ -14,14 +14,13 @@ Run
 
 In order to run the entire unit test suite, simply run the ``tox`` command
 inside of your source checkout. This will attempt to run every test command
-listed inside of ``tox.ini``, which includes Python 2.7, 3.3, 3.4, PyPy,
+listed inside of ``tox.ini``, which includes Python 2.7, 3.4, PyPy,
 and a PEP 8 check. You should run the full test suite on all versions before
 submitting changes for review in order to avoid unexpected failures in the
 continuous integration system.::
 
    (sdk3)$ tox
    ...
-   py33: commands succeeded
    py34: commands succeeded
    py27: commands succeeded
    pypy: commands succeeded
@@ -79,6 +78,13 @@ under ``clouds`` must be named ``test_cloud``.
 
 Replace ``xxx.xxx.xxx.xxx`` with the IP address or FQDN of your DevStack instance.
 
+You can also create a ``~/.config/openstack/clouds.yaml`` file for your
+DevStack cloud environment using the following commands. Replace
+``DEVSTACK_SOURCE`` with your DevStack source checkout.::
+
+   (sdk3)$ source DEVSTACK_SOURCE/accrc/admin/admin
+   (sdk3)$ ./create_yaml.sh
+
 Run
 ***
 
@@ -97,4 +103,29 @@ the continuous integration system.::
    (sdk3)$ tox -e functional3
    ...
    functional3: commands succeeded
+   congratulations :)
+
+Examples Tests
+--------------
+
+Similar to the functional tests, the examples tests assume that you have a
+public or private OpenStack cloud that you can run the tests against. In
+practice, this means that the tests should initially be run against a stable
+branch of `DevStack <http://docs.openstack.org/developer/devstack/>`_.
+And like the functional tests, the examples tests connect to an OpenStack cloud
+using `os-client-config <http://git.openstack.org/cgit/openstack/os-client-config/tree/README.rst>`_.
+See the functional tests instructions for information on setting up DevStack and
+os-client-config.
+
+Run
+***
+
+In order to run the entire examples test suite, simply run the
+``tox -e examples`` command inside of your source checkout. This will
+attempt to run every test command under ``/openstack/tests/examples/``
+in the source tree.::
+
+   (sdk3)$ tox -e examples
+   ...
+   examples: commands succeeded
    congratulations :)

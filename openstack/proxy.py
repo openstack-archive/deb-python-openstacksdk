@@ -123,14 +123,17 @@ class BaseProxy(object):
 
         try:
             rv = res.delete(self.session)
-        except exceptions.NotFoundException as exc:
+        except exceptions.NotFoundException as e:
             if ignore_missing:
                 return None
             else:
                 # Reraise with a more specific type and message
                 raise exceptions.ResourceNotFound(
-                    "No %s found for %s" % (resource_type.__name__, value),
-                    details=exc.details, status_code=exc.status_code)
+                    message="No %s found for %s" %
+                            (resource_type.__name__, value),
+                    details=e.details, response=e.response,
+                    request_id=e.request_id, url=e.url, method=e.method,
+                    http_status=e.http_status, cause=e.cause)
 
         return rv
 
@@ -176,7 +179,7 @@ class BaseProxy(object):
         return res.create(self.session)
 
     @_check_resource(strict=False)
-    def _get(self, resource_type, value=None, path_args=None):
+    def _get(self, resource_type, value=None, path_args=None, args=None):
         """Get a resource
 
         :param resource_type: The type of resource to get.
@@ -186,17 +189,23 @@ class BaseProxy(object):
                       subclass.
         :param path_args: A dict containing arguments for forming the request
                           URL, if needed.
+        :param args: A optional dict containing arguments that will be
+            translated into query strings when forming the request URL.
+
         :returns: The result of the ``get``
         :rtype: :class:`~openstack.resource.Resource`
         """
         res = self._get_resource(resource_type, value, path_args)
 
         try:
-            return res.get(self.session)
-        except exceptions.NotFoundException as exc:
+            return res.get(self.session, args=args)
+        except exceptions.NotFoundException as e:
             raise exceptions.ResourceNotFound(
-                "No %s found for %s" % (resource_type.__name__, value),
-                details=exc.details, status_code=exc.status_code)
+                message="No %s found for %s" %
+                        (resource_type.__name__, value),
+                details=e.details, response=e.response,
+                request_id=e.request_id, url=e.url, method=e.method,
+                http_status=e.http_status, cause=e.cause)
 
     def _list(self, resource_type, value=None, paginated=False,
               path_args=None, **query):
@@ -225,7 +234,7 @@ class BaseProxy(object):
         """
         res = self._get_resource(resource_type, value, path_args)
 
-        query = res._convert_ids(query)
+        query = res.convert_ids(query)
         return res.list(self.session, path_args=path_args, paginated=paginated,
                         params=query)
 

@@ -171,3 +171,22 @@ class TestConnection(base.TestCase):
         # NOTE: Along the way, the `v` prefix gets added so we can build
         # up URLs with it.
         self.assertEqual("v" + version, pref.version)
+
+    def test_authorize_works(self):
+        fake_session = mock.Mock()
+        fake_headers = {'X-Auth-Token': 'FAKE_TOKEN'}
+        fake_session.get_auth_headers.return_value = fake_headers
+
+        sot = connection.Connection(session=fake_session,
+                                    authenticator=mock.Mock())
+        res = sot.authorize()
+        self.assertEqual('FAKE_TOKEN', res)
+
+    def test_authorize_silent_failure(self):
+        fake_session = mock.Mock()
+        fake_session.get_auth_headers.return_value = None
+
+        sot = connection.Connection(session=fake_session,
+                                    authenticator=mock.Mock())
+        res = sot.authorize()
+        self.assertIsNone(res)

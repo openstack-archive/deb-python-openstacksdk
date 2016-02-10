@@ -21,18 +21,29 @@ class Quota(resource.Resource):
     service = network_service.NetworkService()
 
     # capabilities
+    allow_retrieve = True
+    allow_update = True
+    allow_delete = True
     allow_list = True
 
     # Properties
     #: The maximum amount of floating IPs you can have. *Type: int*
-    floating_ip = resource.prop('floatingip', type=int)
+    floating_ips = resource.prop('floatingip', type=int)
     #: The maximum amount of networks you can create. *Type: int*
-    network = resource.prop('network', type=int)
+    networks = resource.prop('network', type=int)
     #: The maximum amount of ports you can create. *Type: int*
-    port = resource.prop('port', type=int)
+    ports = resource.prop('port', type=int)
     #: The project these quota values are for.
     project_id = resource.prop('tenant_id')
     #: The maximum amount of routers you can create. *Type: int*
-    router = resource.prop('router', type=int)
+    routers = resource.prop('router', type=int)
     #: The maximum amount of subnets you can create. *Type: int*
-    subnet = resource.prop('subnet', type=int)
+    subnets = resource.prop('subnet', type=int)
+    #: The maximum amount of subnet pools you can create. *Type: int*
+    subnet_pools = resource.prop('subnetpool', type=int)
+    #: The maximum amount of security group rules you can create. *Type: int*
+    security_group_rules = resource.prop('security_group_rule', type=int)
+    #: The maximum amount of security groups you can create. *Type: int*
+    security_groups = resource.prop('security_group', type=int)
+    #: The maximum amount of RBAC policies you can create. *Type: int*
+    rbac_policies = resource.prop('rbac_policy', type=int)

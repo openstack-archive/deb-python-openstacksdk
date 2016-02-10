@@ -45,11 +45,10 @@ class TestServer(testtools.TestCase):
     def setUp(self):
         super(TestServer, self).setUp()
         self.resp = mock.Mock()
-        self.resp.body = ''
+        self.resp.body = None
         self.resp.json = mock.Mock(return_value=self.resp.body)
         self.sess = mock.Mock()
-        self.sess.post = mock.MagicMock()
-        self.sess.post.return_value = self.resp
+        self.sess.post = mock.Mock(return_value=self.resp)
 
     def test_basic(self):
         sot = server.Server()
@@ -70,11 +69,11 @@ class TestServer(testtools.TestCase):
         self.assertEqual(EXAMPLE['addresses'], sot.addresses)
         self.assertEqual(EXAMPLE['created'], sot.created_at)
         self.assertEqual(EXAMPLE['flavorRef'], sot.flavor)
-        self.assertEqual(type(sot.flavor), flavor.Flavor)
+        self.assertIsInstance(sot.flavor, flavor.Flavor)
         self.assertEqual(EXAMPLE['hostId'], sot.host_id)
         self.assertEqual(EXAMPLE['id'], sot.id)
         self.assertEqual(EXAMPLE['imageRef'], sot.image)
-        self.assertEqual(type(sot.image), image.Image)
+        self.assertIsInstance(sot.image, image.Image)
         self.assertEqual(EXAMPLE['links'], sot.links)
         self.assertEqual(EXAMPLE['metadata'], sot.metadata)
         self.assertEqual(EXAMPLE['name'], sot.name)

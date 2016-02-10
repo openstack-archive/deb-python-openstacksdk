@@ -32,7 +32,7 @@ class TestServerMetadata(testtools.TestCase):
     def test_basic(self):
         sot = server_metadata.ServerMetadata()
         self.assertEqual('metadata', sot.resource_key)
-        self.assertEqual(None, sot.resources_key)
+        self.assertIsNone(sot.resources_key)
         self.assertEqual('/servers/%(server_id)s/metadata', sot.base_path)
         self.assertEqual('compute', sot.service.service_type)
         self.assertTrue(sot.allow_create)
@@ -51,8 +51,7 @@ class TestServerMetadata(testtools.TestCase):
         resp.body = FAKE_RESPONSE
         resp.json = mock.Mock(return_value=resp.body)
         sess = mock.Mock()
-        sess.put = mock.MagicMock()
-        sess.put.return_value = resp
+        sess.put = mock.Mock(return_value=resp)
         sot = server_metadata.ServerMetadata(EXAMPLE.copy())
 
         sot.create(sess)
@@ -69,8 +68,7 @@ class TestServerMetadata(testtools.TestCase):
         resp.body = FAKE_RESPONSE
         resp.json = mock.Mock(return_value=resp.body)
         sess = mock.Mock()
-        sess.get = mock.MagicMock()
-        sess.get.return_value = resp
+        sess.get = mock.Mock(return_value=resp)
         sot = server_metadata.ServerMetadata(EXAMPLE.copy())
 
         sot.get(sess)
@@ -86,8 +84,7 @@ class TestServerMetadata(testtools.TestCase):
         resp.body = FAKE_RESPONSE
         resp.json = mock.Mock(return_value=resp.body)
         sess = mock.Mock()
-        sess.put = mock.MagicMock()
-        sess.put.return_value = resp
+        sess.put = mock.Mock(return_value=resp)
         sot = server_metadata.ServerMetadata(EXAMPLE.copy())
 
         sot.update(sess)

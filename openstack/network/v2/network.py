@@ -31,6 +31,12 @@ class Network(resource.Resource):
     #: The administrative state of the network, which is up ``True`` or
     #: down ``False``. *Type: bool*
     admin_state_up = resource.prop('admin_state_up', type=bool)
+    #: Availability zone hints to use when scheduling the network.
+    #: *Type: list of availability zone names*
+    availability_zone_hints = resource.prop('availability_zone_hints')
+    #: Availability zones for the network.
+    #: *Type: list of availability zone names*
+    availability_zones = resource.prop('availability_zones')
     #: The network name.
     name = resource.prop('name')
     #: The project this network is associated with.
@@ -56,6 +62,13 @@ class Network(resource.Resource):
     status = resource.prop('status')
     #: The associated subnets.
     subnets = resource.prop('subnets')
+    #: Read-only. The maximum transmission unit (MTU) of the network resource.
+    mtu = resource.prop('mtu', type=int)
+    #: The port security status, which is enabled ``True`` or disabled
+    #: ``False``. *Type: bool* *Default: False*
+    is_port_security_enabled = resource.prop('port_security_enabled',
+                                             type=bool,
+                                             default=False)
 
     def is_external(self):
         if self.router_external is not None:

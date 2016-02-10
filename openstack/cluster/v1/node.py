@@ -11,8 +11,9 @@
 # under the License.
 
 from openstack.cluster import cluster_service
+from openstack.cluster.v1 import cluster as _cluster
+from openstack.cluster.v1 import profile as _profile
 from openstack import resource
-from openstack import utils
 
 
 class Node(resource.Resource):
@@ -28,6 +29,8 @@ class Node(resource.Resource):
     allow_delete = True
     allow_list = True
 
+    patch_update = True
+
     # Properties
     #: The name of the node.
     name = resource.prop('name')
@@ -35,9 +38,9 @@ class Node(resource.Resource):
     physical_id = resource.prop('physical_id')
     #: The ID of the cluster in which this node is a member.
     #: A node is an orphan node if this field is empty.
-    cluster_id = resource.prop('cluster_id')
+    cluster = resource.prop('cluster_id', type=_cluster.Cluster)
     #: The ID of the profile used by this node.
-    profile_id = resource.prop('profile_id')
+    profile = resource.prop('profile_id', type=_profile.Profile)
     #: The ID of the project this node belongs to.
     project = resource.prop('project')
     #: The name of the profile used by this node.
@@ -48,15 +51,12 @@ class Node(resource.Resource):
     #: A string indicating the role the node plays in a cluster.
     role = resource.prop('role')
     #: The timestamp of the node object's initialization.
-    init_time = resource.prop('init_time')
+    init_at = resource.prop('init_at')
     #: The timestamp of the node's creation, i.e. the physical object
     #: represented by this node is also created.
-    created_time = resource.prop('created_time')
+    created_at = resource.prop('created_at')
     #: The timestamp the node was last updated.
-    updated_time = resource.prop('updated_time')
-    #: The timestamp the node was deleted. This is only used for node
-    #: which has been soft deleted.
-    deleted_time = resource.prop('deleted_time')
+    updated_at = resource.prop('updated_at')
     #: A string indicating the node's status.
     status = resource.prop('status')
     #: A string describing why the node entered its current status.
@@ -68,39 +68,3 @@ class Node(resource.Resource):
     #: A map containing the details of the physical object this node
     #: represents
     details = resource.prop('details', type=dict)
-
-    def _action(self, session, body):
-        """Procedure the invoke an action API.
-
-        :param session: A session object used for sending request.
-        :param body: The body of action to be sent.
-        """
-        url = utils.urljoin(self.base_path, self.id, 'action')
-        resp = session.put(url, endpoint_filter=self.service, json=body)
-        return resp.json()
-
-    def join(self, session, cluster_id):
-        """An action procedure for the node to join a cluster.
-
-        :param session: A session object used for sending request.
-        :param cluster_id: The ID, name or short ID of a cluster the
-            node is about to join.
-        :returns: A dictionary containing the action ID.
-        """
-        body = {
-            'join': {
-                'cluster_id': cluster_id,
-            }
-        }
-        return self._action(session, body)
-
-    def leave(self, session):
-        """An action procedure for the node to leave its current cluster.
-
-        :param session: A session object used for sending request.
-        :returns: A dictionary containing the action ID.
-        """
-        body = {
-            'leave': {}
-        }
-        return self._action(session, body)

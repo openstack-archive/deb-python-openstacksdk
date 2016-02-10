@@ -35,10 +35,11 @@ import copy
 import itertools
 import time
 
-from keystoneauth1 import exceptions as ksa_exceptions
 import six
+from six.moves.urllib import parse as url_parse
 
 from openstack import exceptions
+from openstack import format
 from openstack import utils
 
 
@@ -104,6 +105,9 @@ class prop(object):
             return None
         try:
             value = instance[self.name]
+            # self.type() should not be called on None objects.
+            if value is None:
+                return None
         except KeyError:
             try:
                 value = instance[self.alias]
@@ -117,11 +121,10 @@ class prop(object):
                     value = self.type({self.type.id_attribute: value})
                 else:
                     value = self.type(value)
+            elif issubclass(self.type, format.Formatter):
+                value = self.type.deserialize(value)
             else:
                 value = self.type(value)
-                attr = getattr(value, 'parsed', None)
-                if attr is not None:
-                    value = attr
 
         return value
 
@@ -133,6 +136,8 @@ class prop(object):
                     value = self.type({self.type.id_attribute: value})
                 else:
                     value = self.type(value)
+            elif issubclass(self.type, format.Formatter):
+                value = self.type.serialize(value)
             else:
                 value = str(self.type(value))  # validate to fail fast
 
@@ -214,6 +219,8 @@ class Resource(collections.MutableMapping):
     id_attribute = 'id'
     #: Attribute key associated with the name for this resource.
     name_attribute = 'name'
+    #: Attribute key associated with 'location' from response headers
+    location = header('location')
 
     #: The base part of the url for this resource.
     base_path = ''
@@ -475,7 +482,7 @@ class Resource(collections.MutableMapping):
             return value
 
     @staticmethod
-    def _convert_ids(attrs):
+    def convert_ids(attrs):
         """Return an attribute dictionary suitable for create/update
 
         As some attributes may be Resource types, their ``id`` attribute
@@ -531,7 +538,7 @@ class Resource(collections.MutableMapping):
             raise exceptions.MethodNotSupported(cls, 'create')
 
         # Convert attributes from Resource types into their ids.
-        attrs = cls._convert_ids(attrs)
+        attrs = cls.convert_ids(attrs)
         headers = attrs.pop(HEADERS, None)
 
         body = cls._get_create_body(attrs)
@@ -544,10 +551,13 @@ class Resource(collections.MutableMapping):
             resp = session.put(url, endpoint_filter=cls.service, **args)
         else:
             resp = session.post(url, endpoint_filter=cls.service, **args)
+        resp_headers = resp.headers
         resp = resp.json()
 
         if cls.resource_key:
             resp = resp[cls.resource_key]
+        if resp_headers:
+            resp[HEADERS] = copy.deepcopy(resp_headers)
 
         return resp
 
@@ -563,21 +573,25 @@ class Resource(collections.MutableMapping):
         """
         resp = self.create_by_id(session, self._attrs, self.id, path_args=self)
         self._attrs[self.id_attribute] = resp[self.id_attribute]
+        if HEADERS in resp:
+            self.set_headers(resp[HEADERS])
         self._reset_dirty()
         return self
 
     @classmethod
-    def get_data_by_id(cls, session, resource_id, path_args=None,
+    def get_data_by_id(cls, session, resource_id, path_args=None, args=None,
                        include_headers=False):
-        """Get a the attributes of a remote resource from an id.
+        """Get the attributes of a remote resource from an id.
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
         :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+                            the request.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
+        :param dict args: A dictionary of query parameters to be appended to
+                          the compound URL.
         :param bool include_headers: ``True`` if header data should be
                                      included in the response body,
                                      ``False`` if not.
@@ -590,6 +604,8 @@ class Resource(collections.MutableMapping):
             raise exceptions.MethodNotSupported(cls, 'retrieve')
 
         url = cls._get_url(path_args, resource_id)
+        if args:
+            url = '?'.join([url, url_parse.urlencode(args)])
         response = session.get(url, endpoint_filter=cls.service)
         body = response.json()
 
@@ -609,7 +625,7 @@ class Resource(collections.MutableMapping):
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
         :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+                            the request.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
@@ -626,7 +642,7 @@ class Resource(collections.MutableMapping):
                                   include_headers=include_headers)
         return cls.existing(**body)
 
-    def get(self, session, include_headers=False):
+    def get(self, session, include_headers=False, args=None):
         """Get the remote resource associated with this instance.
 
         :param session: The session to use for making this request.
@@ -634,12 +650,13 @@ class Resource(collections.MutableMapping):
         :param bool include_headers: ``True`` if header data should be
                                      included in the response body,
                                      ``False`` if not.
-
+        :param dict args: A dictionary of query parameters to be appended to
+                          the compound URL.
         :return: This :class:`Resource` instance.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
                  :data:`Resource.allow_retrieve` is not set to ``True``.
         """
-        body = self.get_data_by_id(session, self.id, path_args=self,
+        body = self.get_data_by_id(session, self.id, path_args=self, args=args,
                                    include_headers=include_headers)
         self._attrs.update(body)
         self._loaded = True
@@ -652,7 +669,7 @@ class Resource(collections.MutableMapping):
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
         :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+                            the request.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
@@ -678,7 +695,7 @@ class Resource(collections.MutableMapping):
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
         :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+                            the request.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
@@ -712,7 +729,7 @@ class Resource(collections.MutableMapping):
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
         :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+                            the request.
         :param dict attrs: The attributes to be sent in the body
                            of the request.
         :param dict path_args: A dictionary of arguments to construct
@@ -727,7 +744,7 @@ class Resource(collections.MutableMapping):
             raise exceptions.MethodNotSupported(cls, 'update')
 
         # Convert attributes from Resource types into their ids.
-        attrs = cls._convert_ids(attrs)
+        attrs = cls.convert_ids(attrs)
         if attrs and cls.id_attribute in attrs:
             del attrs[cls.id_attribute]
         headers = attrs.pop(HEADERS, None)
@@ -745,10 +762,13 @@ class Resource(collections.MutableMapping):
             resp = session.patch(url, endpoint_filter=cls.service, **args)
         else:
             resp = session.put(url, endpoint_filter=cls.service, **args)
+        resp_headers = resp.headers
         resp = resp.json()
 
         if cls.resource_key and cls.resource_key in resp.keys():
             resp = resp[cls.resource_key]
+        if resp_headers:
+            resp[HEADERS] = resp_headers
 
         return resp
 
@@ -774,7 +794,8 @@ class Resource(collections.MutableMapping):
             pass
         else:
             assert resp_id == self.id
-
+        if HEADERS in resp:
+            self.set_headers(resp[HEADERS])
         self._reset_dirty()
         return self
 
@@ -785,7 +806,7 @@ class Resource(collections.MutableMapping):
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
         :param resource_id: This resource's identifier, if needed by
-                            the request. The default is ``None``.
+                            the request.
         :param dict path_args: A dictionary of arguments to construct
                                a compound URL.
                                See `How path_args are used`_ for details.
@@ -927,7 +948,7 @@ class Resource(collections.MutableMapping):
         try:
             if cls.allow_retrieve:
                 return cls.get_by_id(session, name_or_id, path_args=path_args)
-        except ksa_exceptions.http.NotFound:
+        except exceptions.NotFoundException:
             pass
 
         data = cls.list(session, path_args=path_args)
@@ -1003,7 +1024,7 @@ def wait_for_delete(session, resource, interval, wait):
     while total_sleep < wait:
         try:
             resource.get(session)
-        except ksa_exceptions.http.NotFound:
+        except exceptions.NotFoundException:
             return resource
         time.sleep(interval)
         total_sleep += interval

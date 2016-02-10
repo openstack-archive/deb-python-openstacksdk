@@ -10,11 +10,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import unittest
 import uuid
 
 from openstack.tests.functional import base
 
 
+@unittest.skip("bug/1524468")
+@unittest.skipUnless(base.service_exists(service_type="metering"),
+                     "Metering service does not exist")
 class TestAlarmChange(base.BaseFunctionalTest):
 
     NAME = uuid.uuid4().hex

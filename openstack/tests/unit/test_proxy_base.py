@@ -18,7 +18,7 @@ from openstack.tests.unit import base
 class TestProxyBase(base.TestCase):
     def setUp(self):
         super(TestProxyBase, self).setUp()
-        self.session = mock.MagicMock()
+        self.session = mock.Mock()
 
     def _verify(self, mock_method, test_method,
                 method_args=None, method_kwargs=None,
@@ -100,13 +100,21 @@ class TestProxyBase(base.TestCase):
                       expected_args=[resource_type, "resource_or_id"],
                       expected_kwargs=expected_kwargs)
 
-    def verify_get(self, test_method, resource_type, value=None,
-                   mock_method="openstack.proxy.BaseProxy._get", **kwargs):
-        the_value = value if value is not None else ["value"]
-        expected_kwargs = {"path_args": kwargs} if kwargs else {}
+    def verify_get(self, test_method, resource_type, value=None, args=None,
+                   mock_method="openstack.proxy.BaseProxy._get",
+                   ignore_value=False, **kwargs):
+        the_value = value
+        if value is None:
+            the_value = [] if ignore_value else ["value"]
+        expected_kwargs = kwargs.pop("expected_kwargs", {})
+        method_kwargs = kwargs.pop("method_kwargs", kwargs)
+        if args:
+            expected_kwargs["args"] = args
+        if kwargs:
+            expected_kwargs["path_args"] = kwargs
         self._verify2(mock_method, test_method,
                       method_args=the_value,
-                      method_kwargs=kwargs,
+                      method_kwargs=method_kwargs or {},
                       expected_args=[resource_type] + the_value,
                       expected_kwargs=expected_kwargs)
 
@@ -163,6 +171,15 @@ class TestProxyBase(base.TestCase):
                       expected_kwargs=expected_kwargs,
                       expected_result=["result"],
                       **kwargs)
+
+    def verify_list_no_kwargs(self, test_method, resource_type,
+                              paginated=False,
+                              mock_method="openstack.proxy.BaseProxy._list"):
+        self._verify2(mock_method, test_method,
+                      method_kwargs={},
+                      expected_args=[resource_type],
+                      expected_kwargs={"paginated": paginated},
+                      expected_result=["result"])
 
     def verify_update(self, test_method, resource_type,
                       mock_method="openstack.proxy.BaseProxy._update",

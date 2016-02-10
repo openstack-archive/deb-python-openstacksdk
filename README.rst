@@ -28,17 +28,7 @@ Documentation
 -------------
 
 Documentation is available at
-http://python-openstacksdk.readthedocs.org/en/latest/
-
-Requirements
-------------
-
-* Python 2.7, Python 3.3+
-* pbr
-* requests
-* six
-* stevedore
-* oslo.utils
+http://developer.openstack.org/sdks/python/openstacksdk/
 
 License
 -------

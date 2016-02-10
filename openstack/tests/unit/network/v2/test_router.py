@@ -23,6 +23,25 @@ EXAMPLE = {
     'name': '4',
     'tenant_id': '5',
     'status': '6',
+    'routes': [],
+    'availability_zone_hints': [],
+    'availability_zones': [],
+}
+
+EXAMPLE_WITH_OPTIONAL = {
+    'admin_state_up': False,
+    'external_gateway_info': {'network_id': '1',
+                              'enable_snat': True,
+                              'external_fixed_ips': []},
+    'id': IDENTIFIER,
+    'name': 'router1',
+    'tenant_id': '2',
+    'status': 'ACTIVE',
+    'routes': [{'nexthop': '172.24.4.20', 'destination': '10.0.3.1/24'}],
+    'ha': True,
+    'distributed': True,
+    'availability_zone_hints': ['zone-1', 'zone-2'],
+    'availability_zones': ['zone-2'],
 }
 
 
@@ -49,6 +68,32 @@ class TestRouter(testtools.TestCase):
         self.assertEqual(EXAMPLE['name'], sot.name)
         self.assertEqual(EXAMPLE['tenant_id'], sot.project_id)
         self.assertEqual(EXAMPLE['status'], sot.status)
+        self.assertFalse(sot.is_ha)
+        self.assertFalse(sot.is_distributed)
+        self.assertEqual(EXAMPLE['routes'], sot.routes)
+        self.assertEqual(EXAMPLE['availability_zone_hints'],
+                         sot.availability_zone_hints)
+        self.assertEqual(EXAMPLE['availability_zones'],
+                         sot.availability_zones)
+
+    def test_make_it_with_optional(self):
+        sot = router.Router(EXAMPLE_WITH_OPTIONAL)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['admin_state_up'],
+                         sot.admin_state_up)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['external_gateway_info'],
+                         sot.external_gateway_info)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['id'], sot.id)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['name'], sot.name)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['tenant_id'], sot.project_id)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['status'], sot.status)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['ha'], sot.is_ha)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['distributed'],
+                         sot.is_distributed)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['routes'], sot.routes)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['availability_zone_hints'],
+                         sot.availability_zone_hints)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['availability_zones'],
+                         sot.availability_zones)
 
     def test_add_interface(self):
         sot = router.Router(EXAMPLE)
@@ -56,8 +101,7 @@ class TestRouter(testtools.TestCase):
         response.body = {"subnet_id": "3", "port_id": "2"}
         response.json = mock.Mock(return_value=response.body)
         sess = mock.Mock()
-        sess.put = mock.MagicMock()
-        sess.put.return_value = response
+        sess.put = mock.Mock(return_value=response)
 
         self.assertEqual(response.body, sot.add_interface(sess, '3'))
 
@@ -72,8 +116,7 @@ class TestRouter(testtools.TestCase):
         response.body = {"subnet_id": "3", "port_id": "2"}
         response.json = mock.Mock(return_value=response.body)
         sess = mock.Mock()
-        sess.put = mock.MagicMock()
-        sess.put.return_value = response
+        sess.put = mock.Mock(return_value=response)
 
         self.assertEqual(response.body, sot.remove_interface(sess, '3'))
 

@@ -26,22 +26,23 @@ FAKE = {
     'name': FAKE_NAME,
     'parent': None,
     'profile_id': 'myserver',
-    'tags': {},
+    'metadata': {},
     'timeout': None,
 }
 
 FAKE_CREATE_RESP = {
     'cluster': {
         'action': 'a679c926-908f-49e7-a822-06ca371e64e1',
-        'created_time': None,
-        'deleted_time': None,
-        'updated_time': None,
+        'init_at': None,
+        'created_at': None,
+        'updated_at': None,
         'data': {},
         'desired_capacity': 1,
         'domain': None,
         'id': FAKE_ID,
         'init_time': None,
         'max_size': 3,
+        'metadata': {},
         'min_size': 0,
         'name': 'test_cluster',
         'nodes': [],
@@ -52,7 +53,6 @@ FAKE_CREATE_RESP = {
         'project': '333acb15a43242f4a609a27cb097a8f2',
         'status': 'INIT',
         'status_reason': 'Initializing',
-        'tags': {},
         'timeout': None,
         'user': '6d600911ff764e54b309ce734c89595e',
     }
@@ -88,7 +88,49 @@ class TestCluster(testtools.TestCase):
         self.assertEqual(FAKE['desired_capacity'], sot.desired_capacity)
 
         self.assertEqual(FAKE['timeout'], sot.timeout)
-        self.assertEqual(FAKE['tags'], sot.tags)
+        self.assertEqual(FAKE['metadata'], sot.metadata)
+
+    def test_scale_in(self):
+        sot = cluster.Cluster(FAKE)
+        sot['id'] = 'IDENTIFIER'
+
+        resp = mock.Mock()
+        resp.json = mock.Mock(return_value='')
+        sess = mock.Mock()
+        sess.post = mock.Mock(return_value=resp)
+        self.assertEqual('', sot.scale_in(sess, 3))
+        url = 'clusters/%s/actions' % sot.id
+        body = {'scale_in': {'count': 3}}
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
+
+    def test_scale_out(self):
+        sot = cluster.Cluster(FAKE)
+        sot['id'] = 'IDENTIFIER'
+
+        resp = mock.Mock()
+        resp.json = mock.Mock(return_value='')
+        sess = mock.Mock()
+        sess.post = mock.Mock(return_value=resp)
+        self.assertEqual('', sot.scale_out(sess, 3))
+        url = 'clusters/%s/actions' % sot.id
+        body = {'scale_out': {'count': 3}}
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
+
+    def test_resize(self):
+        sot = cluster.Cluster(FAKE)
+        sot['id'] = 'IDENTIFIER'
+
+        resp = mock.Mock()
+        resp.json = mock.Mock(return_value='')
+        sess = mock.Mock()
+        sess.post = mock.Mock(return_value=resp)
+        self.assertEqual('', sot.resize(sess, foo='bar', zoo=5))
+        url = 'clusters/%s/actions' % sot.id
+        body = {'resize': {'foo': 'bar', 'zoo': 5}}
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
 
     def test_add_nodes(self):
         sot = cluster.Cluster(FAKE)
@@ -97,12 +139,12 @@ class TestCluster(testtools.TestCase):
         resp = mock.Mock()
         resp.json = mock.Mock(return_value='')
         sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
+        sess.post = mock.Mock(return_value=resp)
         self.assertEqual('', sot.add_nodes(sess, ['node-33']))
-        url = 'clusters/%s/action' % sot.id
+        url = 'clusters/%s/actions' % sot.id
         body = {'add_nodes': {'nodes': ['node-33']}}
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
 
     def test_del_nodes(self):
         sot = cluster.Cluster(FAKE)
@@ -111,12 +153,12 @@ class TestCluster(testtools.TestCase):
         resp = mock.Mock()
         resp.json = mock.Mock(return_value='')
         sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual('', sot.delete_nodes(sess, ['node-11']))
-        url = 'clusters/%s/action' % sot.id
+        sess.post = mock.Mock(return_value=resp)
+        self.assertEqual('', sot.del_nodes(sess, ['node-11']))
+        url = 'clusters/%s/actions' % sot.id
         body = {'del_nodes': {'nodes': ['node-11']}}
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
 
     def test_policy_attach(self):
         sot = cluster.Cluster(FAKE)
@@ -125,21 +167,21 @@ class TestCluster(testtools.TestCase):
         resp = mock.Mock()
         resp.json = mock.Mock(return_value='')
         sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual('', sot.policy_attach(sess, 'POLICY', 1, 2, 0, True))
+        sess.post = mock.Mock(return_value=resp)
+        params = {
+            'enabled': True,
+        }
+        self.assertEqual('', sot.policy_attach(sess, 'POLICY', **params))
 
-        url = 'clusters/%s/action' % sot.id
+        url = 'clusters/%s/actions' % sot.id
         body = {
             'policy_attach': {
                 'policy_id': 'POLICY',
-                'priority': 1,
-                'level': 2,
-                'cooldown': 0,
                 'enabled': True,
             }
         }
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
 
     def test_policy_detach(self):
         sot = cluster.Cluster(FAKE)
@@ -148,13 +190,13 @@ class TestCluster(testtools.TestCase):
         resp = mock.Mock()
         resp.json = mock.Mock(return_value='')
         sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
+        sess.post = mock.Mock(return_value=resp)
         self.assertEqual('', sot.policy_detach(sess, 'POLICY'))
 
-        url = 'clusters/%s/action' % sot.id
+        url = 'clusters/%s/actions' % sot.id
         body = {'policy_detach': {'policy_id': 'POLICY'}}
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)
 
     def test_policy_update(self):
         sot = cluster.Cluster(FAKE)
@@ -163,58 +205,18 @@ class TestCluster(testtools.TestCase):
         resp = mock.Mock()
         resp.json = mock.Mock(return_value='')
         sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual('', sot.policy_update(sess, 'POLICY', 3, 4, 5, False))
+        sess.post = mock.Mock(return_value=resp)
+        params = {
+            'enabled': False
+        }
+        self.assertEqual('', sot.policy_update(sess, 'POLICY', **params))
 
-        url = 'clusters/%s/action' % sot.id
+        url = 'clusters/%s/actions' % sot.id
         body = {
             'policy_update': {
                 'policy_id': 'POLICY',
-                'priority': 3,
-                'level': 4,
-                'cooldown': 5,
                 'enabled': False
             }
         }
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
-
-    def test_policy_enable(self):
-        sot = cluster.Cluster(FAKE)
-        sot['id'] = 'IDENTIFIER'
-
-        resp = mock.Mock()
-        resp.json = mock.Mock(return_value='')
-        sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual('', sot.policy_enable(sess, 'POLICY'))
-
-        url = 'clusters/%s/action' % sot.id
-        body = {
-            'policy_update': {
-                'policy_id': 'POLICY',
-                'enabled': True,
-            }
-        }
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
-
-    def test_policy_disable(self):
-        sot = cluster.Cluster(FAKE)
-        sot['id'] = 'IDENTIFIER'
-
-        resp = mock.Mock()
-        resp.json = mock.Mock(return_value='')
-        sess = mock.Mock()
-        sess.put = mock.MagicMock(return_value=resp)
-        self.assertEqual('', sot.policy_disable(sess, 'POLICY'))
-
-        url = 'clusters/%s/action' % sot.id
-        body = {
-            'policy_update': {
-                'policy_id': 'POLICY',
-                'enabled': False,
-            }
-        }
-        sess.put.assert_called_once_with(url, endpoint_filter=sot.service,
-                                         json=body)
+        sess.post.assert_called_once_with(url, endpoint_filter=sot.service,
+                                          json=body)

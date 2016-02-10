@@ -32,6 +32,12 @@ class Router(resource.Resource):
     #: The administrative state of the router, which is up ``True``
     #: or down ``False``. *Type: bool*
     admin_state_up = resource.prop('admin_state_up', type=bool)
+    #: Availability zone hints to use when scheduling the router.
+    #: *Type: list of availability zone names*
+    availability_zone_hints = resource.prop('availability_zone_hints')
+    #: Availability zones for the router.
+    #: *Type: list of availability zone names*
+    availability_zones = resource.prop('availability_zones')
     #: The ``network_id``, for the external gateway. *Type: dict*
     external_gateway_info = resource.prop('external_gateway_info', type=dict)
     #: The router name.
@@ -40,6 +46,14 @@ class Router(resource.Resource):
     project_id = resource.prop('tenant_id')
     #: The router status.
     status = resource.prop('status')
+    #: The highly-available state of the router, which is highly available
+    #: ``True`` or not ``False``. *Type: bool* *Default: False*
+    is_ha = resource.prop('ha', type=bool, default=False)
+    #: The distributed state of the router, which is distributed ``True``
+    #: or not ``False``. *Type: bool* *Default: False*
+    is_distributed = resource.prop('distributed', type=bool, default=False)
+    # The extra routes configuration for the router.
+    routes = resource.prop('routes', type=list)
 
     def add_interface(self, session, subnet_id):
         """Add an internal interface to a logical router.

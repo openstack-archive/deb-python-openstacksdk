@@ -118,14 +118,14 @@ class TestProxyDelete(testtools.TestCase):
 
     def test_delete_ignore_missing(self):
         self.res.delete.side_effect = exceptions.NotFoundException(
-            message="test", status_code=404)
+            message="test", http_status=404)
 
         rv = self.sot._delete(DeleteableResource, self.fake_id)
         self.assertIsNone(rv)
 
     def test_delete_ResourceNotFound(self):
         self.res.delete.side_effect = exceptions.NotFoundException(
-            message="test", status_code=404)
+            message="test", http_status=404)
 
         self.assertRaisesRegexp(
             exceptions.ResourceNotFound,
@@ -135,7 +135,7 @@ class TestProxyDelete(testtools.TestCase):
 
     def test_delete_HttpException(self):
         self.res.delete.side_effect = exceptions.HttpException(
-            message="test", status_code=500)
+            message="test", http_status=500)
 
         self.assertRaises(exceptions.HttpException, self.sot._delete,
                           DeleteableResource, self.res, ignore_missing=False)
@@ -219,19 +219,25 @@ class TestProxyGet(testtools.TestCase):
     def test_get_resource(self):
         rv = self.sot._get(RetrieveableResource, self.res)
 
-        self.res.get.assert_called_with(self.session)
+        self.res.get.assert_called_with(self.session, args=None)
+        self.assertEqual(rv, self.fake_result)
+
+    def test_get_resource_with_args(self):
+        rv = self.sot._get(RetrieveableResource, self.res, args={'K': 'V'})
+
+        self.res.get.assert_called_with(self.session, args={'K': 'V'})
         self.assertEqual(rv, self.fake_result)
 
     def test_get_id(self):
         rv = self.sot._get(RetrieveableResource, self.fake_id)
 
         RetrieveableResource.existing.assert_called_with(id=self.fake_id)
-        self.res.get.assert_called_with(self.session)
+        self.res.get.assert_called_with(self.session, args=None)
         self.assertEqual(rv, self.fake_result)
 
     def test_get_not_found(self):
         self.res.get.side_effect = exceptions.NotFoundException(
-            message="test", status_code=404)
+            message="test", http_status=404)
 
         self.assertRaisesRegexp(
             exceptions.ResourceNotFound,

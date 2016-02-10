@@ -4,6 +4,7 @@ Network Resources
 .. toctree::
    :maxdepth: 1
 
+   v2/availability_zone
    v2/extension
    v2/floating_ip
    v2/health_monitor
@@ -20,3 +21,4 @@ Network Resources
    v2/security_group
    v2/security_group_rule
    v2/subnet
+   v2/subnet_pool

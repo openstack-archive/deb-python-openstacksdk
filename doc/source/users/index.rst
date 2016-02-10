@@ -29,13 +29,11 @@ approach, this is where you'll want to begin.
    Connect to an OpenStack Cloud Using a Config File <guides/connect_from_config>
    Logging <guides/logging>
    Block Store <guides/block_store>
-   CDN <guides/cdn>
    Compute <guides/compute>
    Database <guides/database>
    Identity <guides/identity>
    Image <guides/image>
-   Key Management <guides/key_management>
-   Metric <guides/metric>
+   Key Manager <guides/key_manager>
    Network <guides/network>
    Object Store <guides/object_store>
    Orchestration <guides/orchestration>
@@ -71,13 +69,12 @@ but listed below are the ones provided by this SDK by default.
    :maxdepth: 1
 
    Block Store <proxies/block_store>
-   CDN <proxies/cdn>
+   Cluster <proxies/cluster>
    Compute <proxies/compute>
    Database <proxies/database>
    Identity <proxies/identity>
    Image <proxies/image>
-   Key Management <proxies/key_management>
-   Metric <proxies/metric>
+   Key Manager <proxies/key_manager>
    Network <proxies/network>
    Object Store <proxies/object_store>
    Orchestration <proxies/orchestration>
@@ -99,11 +96,12 @@ The following services have exposed *Resource* classes.
    :maxdepth: 1
 
    Block Store <resources/block_store/index>
+   Cluster <resources/cluster/index>
    Compute <resources/compute/index>
    Database <resources/database/index>
    Identity <resources/identity/index>
    Image <resources/image/index>
-   Key Management <resources/key_management/index>
+   Key Management <resources/key_manager/index>
    Metric <resources/metric/index>
    Network <resources/network/index>
    Orchestration <resources/orchestration/index>
@@ -122,12 +120,6 @@ can be customized.
    :maxdepth: 1
 
    session
-   transport
-   base_auth_plugin
-   identity_base
-   identity_v2
-   identity_v3
-   module_loader
    resource
    service_filter
    utils

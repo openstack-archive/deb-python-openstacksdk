@@ -28,6 +28,10 @@ EXAMPLE = {
     'shared': True,
     'status': '11',
     'subnets': '12',
+    'mtu': 1400,
+    'port_security_enabled': True,
+    'availability_zone_hints': ['15', '16'],
+    'availability_zones': ['16'],
 }
 
 
@@ -62,29 +66,36 @@ class TestNetwork(testtools.TestCase):
         self.assertEqual(EXAMPLE['shared'], sot.shared)
         self.assertEqual(EXAMPLE['status'], sot.status)
         self.assertEqual(EXAMPLE['subnets'], sot.subnets)
+        self.assertEqual(EXAMPLE['mtu'], sot.mtu)
+        self.assertEqual(EXAMPLE['port_security_enabled'],
+                         sot.is_port_security_enabled)
+        self.assertEqual(EXAMPLE['availability_zone_hints'],
+                         sot.availability_zone_hints)
+        self.assertEqual(EXAMPLE['availability_zones'],
+                         sot.availability_zones)
 
     def test_external(self):
         sot = network.Network(EXAMPLE)
-        self.assertEqual(True, sot.is_external())
+        self.assertTrue(sot.is_external())
 
         example = dict(EXAMPLE)
         example['router:external'] = False
         sot = network.Network(example)
-        self.assertEqual(False, sot.is_external())
+        self.assertFalse(sot.is_external())
 
         example = dict(EXAMPLE)
         del example['router:external']
         sot = network.Network(example)
-        self.assertEqual(False, sot.is_external())
+        self.assertFalse(sot.is_external())
 
         example = dict(EXAMPLE)
         del example['router:external']
         example['router_type'] = 'Internal'
         sot = network.Network(example)
-        self.assertEqual(False, sot.is_external())
+        self.assertFalse(sot.is_external())
 
         example = dict(EXAMPLE)
         del example['router:external']
         example['router_type'] = 'External'
         sot = network.Network(example)
-        self.assertEqual(True, sot.is_external())
+        self.assertTrue(sot.is_external())

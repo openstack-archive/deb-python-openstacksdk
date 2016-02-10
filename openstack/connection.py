@@ -232,3 +232,21 @@ class Connection(object):
             setattr(self, attr_name, proxy_class(self.session))
         except Exception as e:
             _logger.warn("Unable to load %s: %s" % (module, e))
+
+    def authorize(self):
+        """Authorize this Connection
+
+        **NOTE**: This method is optional. When an application makes a call
+                  to any OpenStack service, this method allows you to request
+                  a token manually before attempting to do anything else.
+
+        :returns: A string token.
+
+        :raises:`~openstack.exceptions.HttpException` if the authorization
+                fails due to reasons like the credentials provided are unable
+                to be authorized or the `auth_plugin` argument is missing,
+                etc.
+        """
+        headers = self.session.get_auth_headers()
+
+        return headers.get('X-Auth-Token') if headers else None

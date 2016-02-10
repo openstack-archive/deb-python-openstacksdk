@@ -252,19 +252,19 @@ class Test_objects(TestObjectStoreProxy):
 #                      httpretty.last_request().path)
 
 
-class Test_save_object(TestObjectStoreProxy):
+class Test_download_object(TestObjectStoreProxy):
 
     @mock.patch("openstack.object_store.v1._proxy.Proxy.get_object")
-    def test_save(self, mock_get):
+    def test_download(self, mock_get):
         the_data = "here's some data"
         mock_get.return_value = the_data
-        ob = mock.MagicMock()
+        ob = mock.Mock()
 
         fake_open = mock.mock_open()
         file_path = "blarga/somefile"
         with mock.patch("openstack.object_store.v1._proxy.open",
                         fake_open, create=True):
-            self.proxy.download_object(ob, file_path)
+            self.proxy.download_object(ob, container="tainer", path=file_path)
 
         fake_open.assert_called_once_with(file_path, "w")
         fake_handle = fake_open()
