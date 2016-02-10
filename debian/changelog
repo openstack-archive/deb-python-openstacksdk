@@ -1,6 +1,7 @@
 python-openstacksdk (0.7.4-1) UNRELEASED; urgency=medium
 
   * d/conrol: Update dependencies.
+  * d/patches: Update patch remove-intersphinx.patch
 
  -- Ivan Udovichenko <iudovichenko@mirantis.com>  Wed, 10 Feb 2016 15:23:34 +0200
 
