@@ -8,6 +8,7 @@ python-openstacksdk (0.7.4-1) UNRELEASED; urgency=medium
   * d/control: Update min version of python(3)-keystoneauth1 to ensure this
     bug is fixed: https://bugs.launchpad.net/keystoneauth/+bug/1502232
   * d/control: Add git to build-depends for sphinx-build
+  * d/control: Add python-oslosphinx to build-depends.
 
  -- Ivan Udovichenko <iudovichenko@mirantis.com>  Wed, 10 Feb 2016 15:23:34 +0200
 
