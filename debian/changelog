@@ -1,16 +1,14 @@
 python-openstacksdk (0.7.4-1) UNRELEASED; urgency=medium
 
+  [ Ivan Udovichenko ]
   * d/conrol: Update dependencies.
   * d/patches: Update patch remove-intersphinx.patch
 
- -- Ivan Udovichenko <iudovichenko@mirantis.com>  Wed, 10 Feb 2016 15:23:34 +0200
-
-python-openstacksdk (0.7.1-3) UNRELEASED; urgency=medium
-
+  [ Corey Bryant ]
   * d/control: Update min version of python(3)-keystoneauth1 to ensure this
     bug is fixed: https://bugs.launchpad.net/keystoneauth/+bug/1502232
 
- -- Corey Bryant <corey.bryant@canonical.com>  Thu, 07 Jan 2016 07:55:17 -0500
+ -- Ivan Udovichenko <iudovichenko@mirantis.com>  Wed, 10 Feb 2016 15:23:34 +0200
 
 python-openstacksdk (0.7.1-2) experimental; urgency=medium
 
