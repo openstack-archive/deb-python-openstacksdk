@@ -10,6 +10,9 @@ python-openstacksdk (0.7.4-1) UNRELEASED; urgency=medium
   * d/control: Add git to build-depends for sphinx-build
   * d/control: Add python-oslosphinx to build-depends.
 
+  [ Ondřej Nový ]
+  * Fixed VCS URLs (https).
+
  -- Ivan Udovichenko <iudovichenko@mirantis.com>  Wed, 10 Feb 2016 15:23:34 +0200
 
 python-openstacksdk (0.7.1-2) experimental; urgency=medium
