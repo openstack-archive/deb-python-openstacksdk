@@ -1,4 +1,4 @@
-python-openstacksdk (0.7.4-1) UNRELEASED; urgency=medium
+python-openstacksdk (0.8.0-1) UNRELEASED; urgency=medium
 
   [ Ivan Udovichenko ]
   * d/conrol: Update dependencies.
@@ -13,7 +13,10 @@ python-openstacksdk (0.7.4-1) UNRELEASED; urgency=medium
   [ Ondřej Nový ]
   * Fixed VCS URLs (https).
 
- -- Ivan Udovichenko <iudovichenko@mirantis.com>  Wed, 10 Feb 2016 15:23:34 +0200
+  [ Corey Bryant ]
+  * New upstream release.
+
+ -- Corey Bryant <corey.bryant@canonical.com>  Mon, 29 Feb 2016 10:18:37 -0500
 
 python-openstacksdk (0.7.1-2) experimental; urgency=medium
 
