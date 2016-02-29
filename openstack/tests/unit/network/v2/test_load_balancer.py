@@ -19,13 +19,15 @@ EXAMPLE = {
     'admin_state_up': True,
     'description': '2',
     'id': IDENTIFIER,
-    'listeners': '4',
+    'listeners': [{'id', '4'}],
     'name': '5',
     'operating_status': '6',
     'provisioning_status': '7',
     'tenant_id': '8',
     'vip_address': '9',
     'vip_subnet_id': '10',
+    'vip_port_id': '11',
+    'provider': '12',
 }
 
 
@@ -48,7 +50,7 @@ class TestLoadBalancer(testtools.TestCase):
         self.assertEqual(EXAMPLE['admin_state_up'], sot.admin_state_up)
         self.assertEqual(EXAMPLE['description'], sot.description)
         self.assertEqual(EXAMPLE['id'], sot.id)
-        self.assertEqual(EXAMPLE['listeners'], sot.listeners)
+        self.assertEqual(EXAMPLE['listeners'], sot.listener_ids)
         self.assertEqual(EXAMPLE['name'], sot.name)
         self.assertEqual(EXAMPLE['operating_status'], sot.operating_status)
         self.assertEqual(EXAMPLE['provisioning_status'],
@@ -56,3 +58,5 @@ class TestLoadBalancer(testtools.TestCase):
         self.assertEqual(EXAMPLE['tenant_id'], sot.project_id)
         self.assertEqual(EXAMPLE['vip_address'], sot.vip_address)
         self.assertEqual(EXAMPLE['vip_subnet_id'], sot.vip_subnet_id)
+        self.assertEqual(EXAMPLE['vip_port_id'], sot.vip_port_id)
+        self.assertEqual(EXAMPLE['provider'], sot.provider)

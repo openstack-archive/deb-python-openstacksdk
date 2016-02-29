@@ -17,6 +17,7 @@ from openstack.compute.v2 import image as _image
 from openstack.compute.v2 import keypair as _keypair
 from openstack.compute.v2 import limits
 from openstack.compute.v2 import server as _server
+from openstack.compute.v2 import server_group as _server_group
 from openstack.compute.v2 import server_interface as _server_interface
 from openstack.compute.v2 import server_ip
 from openstack import proxy
@@ -122,7 +123,7 @@ class Proxy(proxy.BaseProxy):
     def update_flavor(self, flavor, **attrs):
         """Update a flavor
 
-        :param flavor: Either the id of a flavor or a
+        :param flavor: Either the ID of a flavor or a
                       :class:`~openstack.compute.v2.flavor.Flavor` instance.
         :attrs kwargs: The attributes to update on the flavor represented
                        by ``value``.
@@ -200,7 +201,7 @@ class Proxy(proxy.BaseProxy):
     def get_image_metadata(self, image, key=None):
         """Return a dictionary of metadata for an image
 
-        :param server: Either the id of an image or a
+        :param server: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
@@ -217,7 +218,7 @@ class Proxy(proxy.BaseProxy):
     def create_image_metadata(self, image, **metadata):
         """Create metadata for an image
 
-        :param server: Either the id of an image or a
+        :param server: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
@@ -235,7 +236,7 @@ class Proxy(proxy.BaseProxy):
     def replace_image_metadata(self, image, **metadata):
         """Replace metadata for an image
 
-        :param server: Either the id of a image or a
+        :param server: Either the ID of a image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
@@ -254,7 +255,7 @@ class Proxy(proxy.BaseProxy):
     def update_image_metadata(self, image, **metadata):
         """Update metadata for an image
 
-        :param server: Either the id of an image or a
+        :param server: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
@@ -273,7 +274,7 @@ class Proxy(proxy.BaseProxy):
     def delete_image_metadata(self, image, key):
         """Delete metadata for an image
 
-        :param server: Either the id of an image or a
+        :param server: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
@@ -353,7 +354,7 @@ class Proxy(proxy.BaseProxy):
     def update_keypair(self, keypair, **attrs):
         """Update a keypair
 
-        :param keypair: Either the id of a keypair or a
+        :param keypair: Either the ID of a keypair or a
                         :class:`~openstack.compute.v2.keypair.Keypair`
                         instance.
         :attrs kwargs: The attributes to update on the keypair represented
@@ -476,7 +477,7 @@ class Proxy(proxy.BaseProxy):
     def update_server(self, server, **attrs):
         """Update a server
 
-        :param server: Either the id of a server or a
+        :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` instance.
         :attrs kwargs: The attributes to update on the server represented
                        by ``server``.
@@ -683,7 +684,7 @@ class Proxy(proxy.BaseProxy):
     def get_server_metadata(self, server, key=None):
         """Return a dictionary of metadata for a server
 
-        :param server: Either the id of a server or a
+        :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
@@ -700,7 +701,7 @@ class Proxy(proxy.BaseProxy):
     def create_server_metadata(self, server, **metadata):
         """Create metadata for a server
 
-        :param server: Either the id of a server or a
+        :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
@@ -718,7 +719,7 @@ class Proxy(proxy.BaseProxy):
     def replace_server_metadata(self, server, **metadata):
         """Replace metadata for a server
 
-        :param server: Either the id of a server or a
+        :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
@@ -737,7 +738,7 @@ class Proxy(proxy.BaseProxy):
     def update_server_metadata(self, server, **metadata):
         """Update metadata for a server
 
-        :param server: Either the id of a server or a
+        :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
@@ -756,7 +757,7 @@ class Proxy(proxy.BaseProxy):
     def delete_server_metadata(self, server, key):
         """Delete metadata for a server
 
-        :param server: Either the id of a server or a
+        :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
@@ -766,3 +767,73 @@ class Proxy(proxy.BaseProxy):
         """
         res = self._get_base_resource(server, _server.Server)
         return res.delete_metadata(self.session, key)
+
+    def create_server_group(self, **attrs):
+        """Create a new server group from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+            a :class:`~openstack.compute.v2.server_group.ServerGroup`,
+            comprised of the properties on the ServerGroup class.
+
+        :returns: The results of server group creation
+        :rtype: :class:`~openstack.compute.v2.server_group.ServerGroup`
+        """
+        return self._create(_server_group.ServerGroup, **attrs)
+
+    def delete_server_group(self, server_group, ignore_missing=True):
+        """Delete a server group
+
+        :param server_group: The value can be either the ID of a server group
+               or a :class:`~openstack.compute.v2.server_group.ServerGroup`
+               instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the server group does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent server group.
+
+        :returns: ``None``
+        """
+        self._delete(_server_group.ServerGroup, server_group,
+                     ignore_missing=ignore_missing)
+
+    def find_server_group(self, name_or_id, ignore_missing=True):
+        """Find a single server group
+
+        :param name_or_id: The name or ID of a server group.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns:
+            One :class:`~openstack.compute.v2.server_group.ServerGroup` object
+            or None
+        """
+        return self._find(_server_group.ServerGroup, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_server_group(self, server_group):
+        """Get a single server group
+
+        :param server_group: The value can be the ID of a server group or a
+               :class:`~openstack.compute.v2.server_group.ServerGroup`
+               instance.
+
+        :returns:
+            A :class:`~openstack.compute.v2.server_group.ServerGroup` object.
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(_server_group.ServerGroup, server_group)
+
+    def server_groups(self, **query):
+        """Return a generator of server groups
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of ServerGroup objects
+        :rtype: :class:`~openstack.compute.v2.server_group.ServerGroup`
+        """
+        return self._list(_server_group.ServerGroup, paginated=False, **query)

@@ -11,9 +11,8 @@
 # under the License.
 
 from openstack.cluster import cluster_service
-from openstack.cluster.v1 import cluster as _cluster
-from openstack.cluster.v1 import profile as _profile
 from openstack import resource
+from openstack import utils
 
 
 class Node(resource.Resource):
@@ -38,11 +37,11 @@ class Node(resource.Resource):
     physical_id = resource.prop('physical_id')
     #: The ID of the cluster in which this node is a member.
     #: A node is an orphan node if this field is empty.
-    cluster = resource.prop('cluster_id', type=_cluster.Cluster)
+    cluster_id = resource.prop('cluster_id')
     #: The ID of the profile used by this node.
-    profile = resource.prop('profile_id', type=_profile.Profile)
+    profile_id = resource.prop('profile_id')
     #: The ID of the project this node belongs to.
-    project = resource.prop('project')
+    project_id = resource.prop('project')
     #: The name of the profile used by this node.
     profile_name = resource.prop('profile_name')
     #: An integer that is unique inside the owning cluster.
@@ -68,3 +67,49 @@ class Node(resource.Resource):
     #: A map containing the details of the physical object this node
     #: represents
     details = resource.prop('details', type=dict)
+
+    def _action(self, session, body):
+        """Procedure the invoke an action API.
+
+        :param session: A session object used for sending request.
+        :param body: The body of action to be sent.
+        """
+        url = utils.urljoin(self.base_path, self.id, 'actions')
+        resp = session.post(url, endpoint_filter=self.service, json=body)
+        return resp.json
+
+    def check(self, session, **params):
+        """An action procedure for the node to check its health status.
+
+        :param session: A session object used for sending request.
+        :returns: A dictionary containing the action ID.
+        """
+        body = {
+            'check': params
+        }
+        return self._action(session, body)
+
+    def recover(self, session, **params):
+        """An action procedure for the node to recover.
+
+        :param session: A session object used for sending request.
+        :returns: A dictionary containing the action ID.
+        """
+        body = {
+            'recover': params
+        }
+        return self._action(session, body)
+
+    def delete(self, session):
+        """Delete the remote resource associated with this instance.
+
+        :param session: The session to use for making this request.
+        :type session: :class:`~openstack.session.Session`
+
+        :returns: The instance of the Node which was deleted.
+        :rtype: :class:`~openstack.cluster.v1.node.Node`.
+        """
+        url = self._get_url(self, self.id)
+        resp = session.delete(url, endpoint_filter=self.service)
+        self.location = resp.headers['location']
+        return self

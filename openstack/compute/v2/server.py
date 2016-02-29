@@ -11,8 +11,6 @@
 # under the License.
 
 from openstack.compute import compute_service
-from openstack.compute.v2 import flavor
-from openstack.compute.v2 import image
 from openstack.compute.v2 import metadata
 from openstack import resource
 from openstack import utils
@@ -43,18 +41,14 @@ class Server(resource.Resource, metadata.MetadataMixin):
     addresses = resource.prop('addresses', type=dict)
     #: Timestamp of when the server was created.
     created_at = resource.prop('created')
-    #: A dictionary with details on the flavor this server is running.
-    #: The dictionary includes a key for the ``id`` of the flavor, as well
-    #: as a ``links`` key, which includes a list of relevant links for this
-    #: flavor. *Type: dict*
-    flavor = resource.prop('flavorRef', alias='flavor', type=flavor.Flavor)
+    #: The flavor reference, as a ID or full URL, for the flavor to use for
+    #: this server.
+    flavor_id = resource.prop('flavorRef')
     #: An ID representing the host of this server.
     host_id = resource.prop('hostId')
-    #: A dictionary with details on the image this server is running.
-    #: The dictionary includes a key for ``id`` of the image, as well
-    #: as a ``links`` key, which includes a list of relevant links for this
-    #: image. *Type: dict*
-    image = resource.prop('imageRef', alias='image', type=image.Image)
+    #: The image reference, as a ID or full URL, for the image to use for
+    #: this server.
+    image_id = resource.prop('imageRef')
     #: A list of dictionaries holding links relevant to this server.
     links = resource.prop('links')
     #: Metadata stored for this server. *Type: dict*
@@ -64,7 +58,7 @@ class Server(resource.Resource, metadata.MetadataMixin):
     #: While the server is building, this value represents the percentage
     #: of completion. Once it is completed, it will be 100.  *Type: int*
     progress = resource.prop('progress', type=int)
-    #: The project this server is associated with.
+    #: The ID of the project this server is associated with.
     project_id = resource.prop('tenant_id')
     #: The state this server is in. Valid values include ``ACTIVE``,
     #: ``BUILDING``, ``DELETED``, ``ERROR``, ``HARD_REBOOT``, ``PASSWORD``,

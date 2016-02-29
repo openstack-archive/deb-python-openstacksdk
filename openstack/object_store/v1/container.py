@@ -11,11 +11,23 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from openstack import format
 from openstack.object_store.v1 import _base
 from openstack import resource
 
 
 class Container(_base.BaseResource):
+    _custom_metadata_prefix = "X-Container-Meta-"
+    _system_metadata = {
+        "content_type": "content-type",
+        "detect_content_type": "x-detect-content-type",
+        "versions_location": "x-versions-location",
+        "read_ACL": "x-container-read",
+        "write_ACL": "x-container-write",
+        "sync_to": "x-container-sync-to",
+        "sync_key": "x-container-sync-key"
+    }
+
     base_path = "/"
     id_attribute = "name"
 
@@ -40,6 +52,8 @@ class Container(_base.BaseResource):
     object_count = resource.header("x-container-object-count", type=int)
     #: The count of bytes used in total.
     bytes_used = resource.header("x-container-bytes-used", type=int)
+    #: The timestamp of the transaction.
+    timestamp = resource.header("x-timestamp", type=format.UNIXEpoch)
 
     # Request headers (when id=None)
     #: If set to True, Object Storage queries all replicas to return the
@@ -67,9 +81,7 @@ class Container(_base.BaseResource):
     #: the name before you include it in the header. To disable
     #: versioning, set the header to an empty string.
     versions_location = resource.header("x-versions-location")
-    #: Set to any value to disable versioning.
-    remove_versions_location = resource.header("x-remove-versions-location")
-    #: Changes the MIME type for the object.
+    #: The MIME type of the list of names.
     content_type = resource.header("content-type")
     #: If set to true, Object Storage guesses the content type based
     #: on the file extension and ignores the value sent in the

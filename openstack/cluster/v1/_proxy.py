@@ -191,9 +191,11 @@ class Proxy(proxy.BaseProxy):
             the cluster could not be found. When set to ``True``, no exception
             will be raised when attempting to delete a non-existent cluster.
 
-        :returns: ``None``
+        :returns: The instance of the Cluster which was deleted.
+        :rtype: :class:`~openstack.cluster.v1.cluster.Cluster`.
         """
-        self._delete(_cluster.Cluster, cluster, ignore_missing=ignore_missing)
+        return self._delete(_cluster.Cluster, cluster,
+                            ignore_missing=ignore_missing)
 
     def find_cluster(self, name_or_id, ignore_missing=True):
         """Find a single cluster.
@@ -379,6 +381,32 @@ class Proxy(proxy.BaseProxy):
             obj = self._find(_cluster.Cluster, cluster, ignore_missing=False)
         return obj.policy_update(self.session, policy, **params)
 
+    def check_cluster(self, cluster, **params):
+        """check a cluster.
+
+        :param cluster: The value can be either the ID of a cluster or a
+            :class:`~openstack.cluster.v1.cluster.Cluster` instance.
+        :param dict \*\*params: A dictionary providing the parameters for the
+            check action.
+
+        :returns: A dictionary containing the action ID.
+        """
+        obj = self._get_resource(_cluster.Cluster, cluster)
+        return obj.check(self.session, **params)
+
+    def recover_cluster(self, cluster, **params):
+        """recover a node.
+
+        :param cluster: The value can be either the ID of a cluster or a
+            :class:`~openstack.cluster.v1.cluster.Cluster` instance.
+        :param dict \*\*params: A dictionary providing the parameters for the
+            check action.
+
+        :returns: A dictionary containing the action ID.
+        """
+        obj = self._get_resource(_cluster.Cluster, cluster)
+        return obj.recover(self.session, **params)
+
     def create_node(self, **attrs):
         """Create a new node from attributes.
 
@@ -401,9 +429,32 @@ class Proxy(proxy.BaseProxy):
             the node could not be found. When set to ``True``, no exception
             will be raised when attempting to delete a non-existent node.
 
-        :returns: ``None``
+        :returns: The instance of the Node which was deleted.
+        :rtype: :class:`~openstack.cluster.v1.node.Node`.
         """
-        self._delete(_node.Node, node, ignore_missing=ignore_missing)
+        return self._delete(_node.Node, node, ignore_missing=ignore_missing)
+
+    def check_node(self, node, **params):
+        """check a node.
+
+        :param node: The value can be either the ID of a node or a
+            :class:`~openstack.cluster.v1.node.Node` instance.
+
+        :returns: A dictionary containing the action ID.
+        """
+        obj = self._get_resource(_node.Node, node)
+        return obj.check(self.session, **params)
+
+    def recover_node(self, node, **params):
+        """recover a node.
+
+        :param node: The value can be either the ID of a node or a
+            :class:`~openstack.cluster.v1.node.Node` instance.
+
+        :returns: A dictionary containing the action ID.
+        """
+        obj = self._get_resource(_node.Node, node)
+        return obj.recover(self.session, **params)
 
     def find_node(self, name_or_id, ignore_missing=True):
         """Find a single node.
