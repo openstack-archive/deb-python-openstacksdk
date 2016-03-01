@@ -15,6 +15,8 @@ python-openstacksdk (0.8.0-1) UNRELEASED; urgency=medium
 
   [ Corey Bryant ]
   * New upstream release.
+  * d/p/remove-openstackdocstheme.patch: Drop openstackdocstheme from sphinx
+    documentation.
 
  -- Corey Bryant <corey.bryant@canonical.com>  Mon, 29 Feb 2016 10:18:37 -0500
 

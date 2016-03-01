@@ -1,0 +1,34 @@
+Description: Drop openstackdocstheme from sphinx documentation as it causes
+             a "search.html doesn't look like a Sphinx search page" error
+             for dh_sphinxdoc.
+Author: Corey Bryant <corey.bryant@canonical.com>
+Forwarded: no
+
+--- a/doc/source/conf.py
++++ b/doc/source/conf.py
+@@ -15,7 +15,7 @@
+ import os
+ import sys
+ 
+-import openstackdocstheme
++#import openstackdocstheme
+ 
+ sys.path.insert(0, os.path.abspath('../..'))
+ # -- General configuration ----------------------------------------------------
+@@ -93,13 +93,13 @@
+ 
+ # The theme to use for HTML and HTML Help pages.  See the documentation for
+ # a list of builtin themes.
+-html_theme = 'openstackdocs'
++html_theme = 'default'
+ 
+ # Add any paths that contain custom themes here, relative to this directory.
+-html_theme_path = [openstackdocstheme.get_html_theme_path()]
++#html_theme_path = [openstackdocstheme.get_html_theme_path()]
+ 
+ # Don't let openstackdocstheme insert TOCs automatically.
+-theme_include_auto_toc = False
++#theme_include_auto_toc = False
+ 
+ # Output file base name for HTML help builder.
+ htmlhelp_basename = '%sdoc' % project
