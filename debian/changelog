@@ -1,4 +1,4 @@
-python-openstacksdk (0.8.0-1) UNRELEASED; urgency=medium
+python-openstacksdk (0.8.0-2) experimental; urgency=medium
 
   [ Ivan Udovichenko ]
   * d/conrol: Update dependencies.
@@ -19,7 +19,10 @@ python-openstacksdk (0.8.0-1) UNRELEASED; urgency=medium
     documentation.
   * d/control: Drop python-openstackdocstheme from BDs.
 
- -- Corey Bryant <corey.bryant@canonical.com>  Mon, 29 Feb 2016 10:18:37 -0500
+  [ Thomas Goirand ]
+  * Standards-Version: 3.9.7 (no change).
+
+ -- Thomas Goirand <zigo@debian.org>  Thu, 03 Mar 2016 04:38:29 +0000
 
 python-openstacksdk (0.7.1-2) experimental; urgency=medium
 
