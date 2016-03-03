@@ -21,6 +21,7 @@ python-openstacksdk (0.8.0-2) experimental; urgency=medium
 
   [ Thomas Goirand ]
   * Standards-Version: 3.9.7 (no change).
+  * Fixed debian/copyright ordering.
 
  -- Thomas Goirand <zigo@debian.org>  Thu, 03 Mar 2016 04:38:29 +0000
 
