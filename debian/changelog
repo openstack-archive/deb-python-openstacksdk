@@ -1,4 +1,4 @@
-python-openstacksdk (0.8.0-2) experimental; urgency=medium
+python-openstacksdk (0.8.0-1) experimental; urgency=medium
 
   [ Ivan Udovichenko ]
   * d/conrol: Update dependencies.
