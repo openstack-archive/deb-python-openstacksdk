@@ -47,7 +47,7 @@ Build-Depends-Indep: git,
                      python3-subunit,
                      subunit,
                      testrepository
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 Vcs-Browser: https://anonscm.debian.org/cgit/openstack/python-openstacksdk.git/
 Vcs-Git: https://anonscm.debian.org/git/openstack/python-openstacksdk.git
 Homepage: https://github.com/stackforge/python-openstacksdk
