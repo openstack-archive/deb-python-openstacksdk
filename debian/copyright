@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: python-openstacksdk
-Source: git://github.com/stackforge/python-openstacksdk.git
+Source: https://github.com/openstack/python-openstacksdk.git
 
 Files: *
 Copyright: (c) 2013, OpenStack Foundation <openstack-dev@lists.openstack.org>
