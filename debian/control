@@ -24,10 +24,10 @@ Build-Depends-Indep: git,
                      python-os-testr (>= 0.4.1),
                      python-oslo.utils (>= 3.4.0),
                      python-oslosphinx (>= 2.5.0),
-                     python-requests (>= 2.5.2),
+                     python-requests (>= 2.10.0),
                      python-requests-mock (>= 0.6.0),
                      python-six (>= 1.9.0),
-                     python-stevedore (>= 1.5.0),
+                     python-stevedore (>= 1.10.0),
                      python-testscenarios (>= 0.4),
                      python-testtools (>= 1.4.0),
                      python3-fixtures (>= 0.3.14),
@@ -38,10 +38,10 @@ Build-Depends-Indep: git,
                      python3-os-client-config (>= 1.13.1),
                      python3-os-testr (>= 0.4.1),
                      python3-oslo.utils (>= 3.4.0),
-                     python3-requests (>= 2.5.2),
+                     python3-requests (>= 2.10.0),
                      python3-requests-mock (>= 0.6.0),
                      python3-six (>= 1.9.0),
-                     python3-stevedore (>= 1.5.0),
+                     python3-stevedore (>= 1.10.0),
                      python3-testscenarios (>= 0.4),
                      python3-testtools (>= 1.4.0),
                      python3-subunit,
@@ -54,12 +54,13 @@ Homepage: https://github.com/stackforge/python-openstacksdk
 
 Package: python-openstacksdk
 Architecture: all
-Depends: python-keystoneauth1 (>= 2.1.0),
+Depends: python-iso8601 (>= 0.1.11),
+         python-keystoneauth1 (>= 2.1.0),
          python-os-client-config (>= 1.13.1),
          python-oslo.utils (>= 3.4.0),
          python-pbr (>= 1.8),
          python-six (>= 1.9.0),
-         python-stevedore (>= 1.5.0),
+         python-stevedore (>= 1.10.0),
          ${misc:Depends},
          ${python:Depends}
 Suggests: python-openstacksdk-doc
@@ -77,12 +78,13 @@ Description: SDK for building applications to work with OpenStack - Python 2.x
 
 Package: python3-openstacksdk
 Architecture: all
-Depends: python3-keystoneauth1 (>= 2.1.0),
+Depends: python3-iso8601 (>= 0.1.11),
+         python3-keystoneauth1 (>= 2.1.0),
          python3-os-client-config (>= 1.13.1),
          python3-oslo.utils (>= 3.4.0),
          python3-pbr (>= 1.8),
          python3-six (>= 1.9.0),
-         python3-stevedore (>= 1.5.0),
+         python3-stevedore (>= 1.10.0),
          ${misc:Depends},
          ${python3:Depends}
 Suggests: python-openstacksdk-doc
