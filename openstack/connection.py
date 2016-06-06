@@ -65,6 +65,7 @@ import os_client_config
 
 from openstack import profile as _profile
 from openstack import proxy
+from openstack import proxy2
 from openstack import session as _session
 from openstack import utils
 
@@ -139,8 +140,14 @@ def from_config(cloud_name=None, cloud_config=None, options=None):
         auth['verify'] = auth.pop('cacert')
     if 'cacert' in cloud_config.config:
         auth['verify'] = cloud_config.config['cacert']
-    if 'insecure' in cloud_config.config:
-        auth['verify'] = not bool(cloud_config.config['insecure'])
+    insecure = cloud_config.config.get('insecure', False)
+    if insecure:
+        auth['verify'] = False
+
+    cert = cloud_config.config.get('cert')
+    if cert:
+        key = cloud_config.config.get('key')
+        auth['cert'] = (cert, key) if key else cert
 
     return Connection(profile=prof, **auth)
 
@@ -148,7 +155,8 @@ def from_config(cloud_name=None, cloud_config=None, options=None):
 class Connection(object):
 
     def __init__(self, session=None, authenticator=None, profile=None,
-                 verify=True, user_agent=None, auth_plugin="password",
+                 verify=True, cert=None, user_agent=None,
+                 auth_plugin="password",
                  **auth_args):
         """Create a context for a connection to a cloud provider.
 
@@ -179,6 +187,11 @@ class Connection(object):
             this parameter will be used to create a transport.  If ``verify``
             is set to true, which is the default, the SSL cert will be
             verified.  It can also be set to a CA_BUNDLE path.
+        :param cert: If a transport is not provided to the connection then this
+            parameter will be used to create a transport. `cert` allows to
+            provide a client certificate file path or a tuple with client
+            certificate and key paths.
+        :type cert: str or tuple
         :param str user_agent: If a transport is not provided to the
             connection, this parameter will be used when creating a transport.
             The value given here will be prepended to the default, which is
@@ -196,7 +209,7 @@ class Connection(object):
                                                         **auth_args)
         self.profile = profile if profile else _profile.Profile()
         self.session = session if session else _session.Session(
-            self.profile, auth=self.authenticator, verify=verify,
+            self.profile, auth=self.authenticator, verify=verify, cert=cert,
             user_agent=user_agent)
         self._open()
 
@@ -226,7 +239,8 @@ class Connection(object):
         try:
             __import__(module)
             proxy_class = getattr(sys.modules[module], "Proxy")
-            if not issubclass(proxy_class, proxy.BaseProxy):
+            if not (issubclass(proxy_class, proxy.BaseProxy) or
+                    issubclass(proxy_class, proxy2.BaseProxy)):
                 raise TypeError("%s.Proxy must inherit from BaseProxy" %
                                 proxy_class.__module__)
             setattr(self, attr_name, proxy_class(self.session))

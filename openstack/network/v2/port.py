@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from openstack import format
 from openstack.network import network_service
 from openstack import resource
 
@@ -28,9 +29,6 @@ class Port(resource.Resource):
     allow_list = True
 
     # Properties
-    #: The administrative state of the port, which is up ``True`` or
-    #: down ``False``. *Type: bool*
-    admin_state_up = resource.prop('admin_state_up', type=bool)
     #: Allowed address pairs.
     allowed_address_pairs = resource.prop('allowed_address_pairs')
     #: The ID of the host where the port is allocated. In some cases,
@@ -59,6 +57,11 @@ class Port(resource.Resource):
     #: In GET operations, the binding:vnic_type extended attribute is
     #: visible to only port owners and administrative users.
     binding_vnic_type = resource.prop('binding:vnic_type')
+    #: Timestamp when the port was created.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
+    created_at = resource.prop('created_at', type=format.ISO8601)
+    #: The port description.
+    description = resource.prop('description')
     #: Device ID of this port.
     device_id = resource.prop('device_id')
     #: Device owner of this port (e.g. ``network:dhcp``).
@@ -71,6 +74,14 @@ class Port(resource.Resource):
     extra_dhcp_opts = resource.prop('extra_dhcp_opts')
     #: IP addresses for the port. Includes the IP address and subnet ID.
     fixed_ips = resource.prop('fixed_ips')
+    #: The administrative state of the port, which is up ``True`` or
+    #: down ``False``. *Type: bool*
+    is_admin_state_up = resource.prop('admin_state_up', type=bool)
+    #: The port security status, which is enabled ``True`` or disabled
+    #: ``False``. *Type: bool* *Default: False*
+    is_port_security_enabled = resource.prop('port_security_enabled',
+                                             type=bool,
+                                             default=False)
     #: The MAC address of the port.
     mac_address = resource.prop('mac_address')
     #: The port name.
@@ -85,8 +96,6 @@ class Port(resource.Resource):
     security_group_ids = resource.prop('security_groups', type=list)
     #: The port status. Value is ``ACTIVE`` or ``DOWN``.
     status = resource.prop('status')
-    #: The port security status, which is enabled ``True`` or disabled
-    #: ``False``. *Type: bool* *Default: False*
-    is_port_security_enabled = resource.prop('port_security_enabled',
-                                             type=bool,
-                                             default=False)
+    #: Timestamp when the port was last updated.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
+    updated_at = resource.prop('updated_at', type=format.ISO8601)

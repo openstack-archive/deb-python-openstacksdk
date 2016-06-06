@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from openstack.network.v2 import address_scope as _address_scope
+from openstack.network.v2 import agent as _agent
 from openstack.network.v2 import availability_zone
 from openstack.network.v2 import extension
 from openstack.network.v2 import floating_ip as _floating_ip
@@ -19,6 +21,7 @@ from openstack.network.v2 import load_balancer as _load_balancer
 from openstack.network.v2 import metering_label as _metering_label
 from openstack.network.v2 import metering_label_rule as _metering_label_rule
 from openstack.network.v2 import network as _network
+from openstack.network.v2 import network_ip_availability
 from openstack.network.v2 import pool as _pool
 from openstack.network.v2 import pool_member as _pool_member
 from openstack.network.v2 import port as _port
@@ -26,6 +29,7 @@ from openstack.network.v2 import quota as _quota
 from openstack.network.v2 import router as _router
 from openstack.network.v2 import security_group as _security_group
 from openstack.network.v2 import security_group_rule as _security_group_rule
+from openstack.network.v2 import segment as _segment
 from openstack.network.v2 import subnet as _subnet
 from openstack.network.v2 import subnet_pool as _subnet_pool
 from openstack.network.v2 import vpn_service as _vpn_service
@@ -34,6 +38,144 @@ from openstack import resource
 
 
 class Proxy(proxy.BaseProxy):
+
+    def create_address_scope(self, **attrs):
+        """Create a new address scope from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+            a :class:`~openstack.network.v2.address_scope.AddressScope`,
+            comprised of the properties on the AddressScope class.
+
+        :returns: The results of address scope creation
+        :rtype: :class:`~openstack.network.v2.address_scope.AddressScope`
+        """
+        return self._create(_address_scope.AddressScope, **attrs)
+
+    def delete_address_scope(self, address_scope, ignore_missing=True):
+        """Delete an address scope
+
+        :param address_scope: The value can be either the ID of an
+            address scope or
+            a :class:`~openstack.network.v2.address_scope.AddressScope`
+            instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the address scope does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent address scope.
+
+        :returns: ``None``
+        """
+        self._delete(_address_scope.AddressScope, address_scope,
+                     ignore_missing=ignore_missing)
+
+    def find_address_scope(self, name_or_id, ignore_missing=True):
+        """Find a single address scope
+
+        :param name_or_id: The name or ID of an address scope.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.network.v2.address_scope.AddressScope`
+                  or None
+        """
+        return self._find(_address_scope.AddressScope, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_address_scope(self, address_scope):
+        """Get a single address scope
+
+        :param address_scope: The value can be the ID of an address scope or a
+            :class:`~openstack.network.v2.address_scope.AddressScope` instance.
+
+        :returns: One :class:`~openstack.network.v2.address_scope.AddressScope`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(_address_scope.AddressScope, address_scope)
+
+    def address_scopes(self, **query):
+        """Return a generator of address scopes
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of address scope objects
+        :rtype: :class:`~openstack.network.v2.address_scope.AddressScope`
+        """
+        return self._list(_address_scope.AddressScope,
+                          paginated=False,
+                          **query)
+
+    def update_address_scope(self, address_scope, **attrs):
+        """Update an address scope
+
+        :param address_scope: Either the ID of an address scope or a
+            :class:`~openstack.network.v2.address_scope.AddressScope` instance.
+        :attrs kwargs: The attributes to update on the address scope
+                       represented by ``value``.
+
+        :returns: The updated address scope
+        :rtype: :class:`~openstack.network.v2.address_scope.AddressScope`
+        """
+        return self._update(_address_scope.AddressScope,
+                            address_scope,
+                            **attrs)
+
+    def agents(self, **query):
+        """Return a generator of network agents
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of agents
+        :rtype: :class:`~openstack.network.v2.agent.Agent`
+        """
+        return self._list(_agent.Agent, paginated=False, **query)
+
+    def delete_agent(self, agent, ignore_missing=True):
+        """Delete a network agent
+
+        :param agent: The value can be the ID of a agent or a
+                     :class:`~openstack.network.v2.agent.Agent` instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the agent does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent agent.
+
+        :returns: ``None``
+        """
+        self._delete(_agent.Agent, agent,
+                     ignore_missing=ignore_missing)
+
+    def get_agent(self, agent, ignore_missing=True):
+        """Get a single network agent
+
+        :param agent: The value can be the ID of a agent or a
+                     :class:`~openstack.network.v2.agent.Agent` instance.
+
+        :returns: One :class:`~openstack.network.v2.agent.Agent`
+        :rtype: :class:`~openstack.network.v2.agent.Agent`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(_agent.Agent, agent)
+
+    def update_agent(self, agent, **attrs):
+        """Update a network agent
+
+        :param agent: The value can be the ID of a agent or a
+                     :class:`~openstack.network.v2.agent.Agent` instance.
+        :attrs kwargs: The attributes to update on the agent represented
+                       by ``value``.
+
+        :returns: One :class:`~openstack.network.v2.agent.Agent`
+        :rtype: :class:`~openstack.network.v2.agent.Agent`
+        """
+        return self._update(_agent.Agent, agent, **attrs)
 
     def availability_zones(self):
         """Return a generator of availability zones
@@ -671,6 +813,50 @@ class Proxy(proxy.BaseProxy):
         """
         return self._update(_network.Network, network, **attrs)
 
+    def find_network_ip_availability(self, name_or_id, ignore_missing=True):
+        """Find IP availability of a network
+
+        :param name_or_id: The name or ID of a network.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.network.v2.network_ip_availability.
+                       NetworkIPAvailability` or None
+        """
+        return self._find(network_ip_availability.NetworkIPAvailability,
+                          name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_network_ip_availability(self, network):
+        """Get IP availability of a network
+
+        :param network:
+            The value can be the ID of a network or a
+            :class:`~openstack.network.v2.network.Network` instance.
+
+        :returns: One :class:`~openstack.network.v2.network_ip_availability.
+                      NetworkIPAvailability`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(network_ip_availability.NetworkIPAvailability,
+                         network)
+
+    def network_ip_availabilities(self, **query):
+        """Return a generator of network ip availabilities
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of network ip availability objects
+        :rtype: :class:`~openstack.network.v2.network_ip_availability.
+                NetworkIPAvailability`
+        """
+        return self._list(network_ip_availability.NetworkIPAvailability,
+                          paginated=False, **query)
+
     def create_pool(self, **attrs):
         """Create a new pool from attributes
 
@@ -929,8 +1115,8 @@ class Proxy(proxy.BaseProxy):
     def update_port(self, port, **attrs):
         """Update a port
 
-        :param value: Either the id of a port or a
-                      :class:`~openstack.network.v2.port.Port` instance.
+        :param port: Either the id of a port or a
+                     :class:`~openstack.network.v2.port.Port` instance.
         :attrs kwargs: The attributes to update on the port represented
                        by ``value``.
 
@@ -1090,11 +1276,41 @@ class Proxy(proxy.BaseProxy):
         """
         return self._update(_router.Router, router, **attrs)
 
-    def router_add_interface(self, router, subnet_id):
-        router.add_interface(self.session, subnet_id)
+    def router_add_interface(self, router, subnet_id=None, port_id=None):
+        """Add Interface to a router
 
-    def router_remove_interface(self, router, subnet_id):
-        router.remove_interface(self.session, subnet_id)
+        :param router: Either the router ID or an instance of
+                       :class:`~openstack.network.v2.router.Router`
+        :param subnet_id: ID of the subnet
+        :param port_id: ID of the port
+        :returns: Router with updated interface
+        :rtype: :class: `~openstack.network.v2.router.Router`
+        """
+
+        body = {}
+        if port_id:
+            body = {'port_id': port_id}
+        else:
+            body = {'subnet_id': subnet_id}
+        return router.add_interface(self.session, **body)
+
+    def router_remove_interface(self, router, subnet_id=None, port_id=None):
+        """Remove Interface from a router
+
+        :param router: Either the router ID or an instance of
+                       :class:`~openstack.network.v2.router.Router`
+        :param subnet: ID of the subnet
+        :param port: ID of the port
+        :returns: Router with updated interface
+        :rtype: :class: `~openstack.network.v2.router.Router`
+        """
+
+        body = {}
+        if port_id:
+            body = {'port_id': port_id}
+        else:
+            body = {'subnet_id': subnet_id}
+        return router.remove_interface(self.session, **body)
 
     def create_security_group(self, **attrs):
         """Create a new security group from attributes
@@ -1282,6 +1498,58 @@ class Proxy(proxy.BaseProxy):
         """
         return self._list(_security_group_rule.SecurityGroupRule,
                           paginated=False, **query)
+
+    def find_segment(self, name_or_id, ignore_missing=True):
+        """Find a single segment
+
+        .. caution::
+           BETA: This API is a work in progress and is subject to change.
+
+        :param name_or_id: The name or ID of a segment.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.network.v2.segment.Segment` or None
+        """
+        return self._find(_segment.Segment, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_segment(self, segment):
+        """Get a single segment
+
+        .. caution::
+           BETA: This API is a work in progress and is subject to change.
+
+        :param segment: The value can be the ID of a segment or a
+                        :class:`~openstack.network.v2.segment.Segment`
+                        instance.
+
+        :returns: One :class:`~openstack.network.v2.segment.Segment`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(_segment.Segment, segment)
+
+    def segments(self, **query):
+        """Return a generator of segments
+
+        .. caution::
+           BETA: This API is a work in progress and is subject to change.
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+            the resources being returned. Available parameters include:
+
+            * network_id: ID of the network that owns the segments
+            * network_type: Network type for the segments
+            * physical_network: Physical network name for the segments
+            * segmentation_id: Segmentation ID for the segments
+
+        :returns: A generator of segment objects
+        :rtype: :class:`~openstack.network.v2.segment.Segment`
+        """
+        return self._list(_segment.Segment, paginated=False, **query)
 
     def create_subnet(self, **attrs):
         """Create a new subnet from attributes

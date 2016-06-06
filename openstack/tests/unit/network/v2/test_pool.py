@@ -27,6 +27,7 @@ EXAMPLE = {
     'tenant_id': '9',
     'protocol': '10',
     'session_persistence': '11',
+    'loadbalancers': [{'id': '12'}],
 }
 
 
@@ -46,7 +47,7 @@ class TestPool(testtools.TestCase):
 
     def test_make_it(self):
         sot = pool.Pool(EXAMPLE)
-        self.assertEqual(EXAMPLE['admin_state_up'], sot.admin_state_up)
+        self.assertTrue(sot.is_admin_state_up)
         self.assertEqual(EXAMPLE['description'], sot.description)
         self.assertEqual(EXAMPLE['healthmonitor_id'], sot.health_monitor_id)
         self.assertEqual(EXAMPLE['id'], sot.id)
@@ -58,3 +59,4 @@ class TestPool(testtools.TestCase):
         self.assertEqual(EXAMPLE['protocol'], sot.protocol)
         self.assertEqual(EXAMPLE['session_persistence'],
                          sot.session_persistence)
+        self.assertEqual(EXAMPLE['loadbalancers'], sot.load_balancer_ids)

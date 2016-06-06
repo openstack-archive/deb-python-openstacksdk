@@ -26,6 +26,7 @@ EXAMPLE = {
     'routes': [],
     'availability_zone_hints': [],
     'availability_zones': [],
+    'description': '10',
 }
 
 EXAMPLE_WITH_OPTIONAL = {
@@ -42,6 +43,7 @@ EXAMPLE_WITH_OPTIONAL = {
     'distributed': True,
     'availability_zone_hints': ['zone-1', 'zone-2'],
     'availability_zones': ['zone-2'],
+    'description': 'description',
 }
 
 
@@ -61,7 +63,7 @@ class TestRouter(testtools.TestCase):
 
     def test_make_it(self):
         sot = router.Router(EXAMPLE)
-        self.assertEqual(EXAMPLE['admin_state_up'], sot.admin_state_up)
+        self.assertTrue(sot.is_admin_state_up)
         self.assertEqual(EXAMPLE['external_gateway_info'],
                          sot.external_gateway_info)
         self.assertEqual(EXAMPLE['id'], sot.id)
@@ -75,52 +77,84 @@ class TestRouter(testtools.TestCase):
                          sot.availability_zone_hints)
         self.assertEqual(EXAMPLE['availability_zones'],
                          sot.availability_zones)
+        self.assertEqual(EXAMPLE['description'], sot.description)
 
     def test_make_it_with_optional(self):
         sot = router.Router(EXAMPLE_WITH_OPTIONAL)
-        self.assertEqual(EXAMPLE_WITH_OPTIONAL['admin_state_up'],
-                         sot.admin_state_up)
+        self.assertFalse(sot.is_admin_state_up)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['external_gateway_info'],
                          sot.external_gateway_info)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['id'], sot.id)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['name'], sot.name)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['tenant_id'], sot.project_id)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['status'], sot.status)
-        self.assertEqual(EXAMPLE_WITH_OPTIONAL['ha'], sot.is_ha)
-        self.assertEqual(EXAMPLE_WITH_OPTIONAL['distributed'],
-                         sot.is_distributed)
+        self.assertTrue(sot.is_ha)
+        self.assertTrue(sot.is_distributed)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['routes'], sot.routes)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['availability_zone_hints'],
                          sot.availability_zone_hints)
         self.assertEqual(EXAMPLE_WITH_OPTIONAL['availability_zones'],
                          sot.availability_zones)
+        self.assertEqual(EXAMPLE_WITH_OPTIONAL['description'],
+                         sot.description)
 
-    def test_add_interface(self):
+    def test_add_interface_subnet(self):
+        # Add subnet to a router
         sot = router.Router(EXAMPLE)
         response = mock.Mock()
         response.body = {"subnet_id": "3", "port_id": "2"}
         response.json = mock.Mock(return_value=response.body)
         sess = mock.Mock()
         sess.put = mock.Mock(return_value=response)
-
-        self.assertEqual(response.body, sot.add_interface(sess, '3'))
+        body = {"subnet_id": "3"}
+        self.assertEqual(response.body, sot.add_interface(sess, **body))
 
         url = 'routers/IDENTIFIER/add_router_interface'
-        body = {"subnet_id": "3"}
         sess.put.assert_called_with(url, endpoint_filter=sot.service,
                                     json=body)
 
-    def test_remove_interface(self):
+    def test_add_interface_port(self):
+        # Add port to a router
+        sot = router.Router(EXAMPLE)
+        response = mock.Mock()
+        response.body = {"subnet_id": "3", "port_id": "3"}
+        response.json = mock.Mock(return_value=response.body)
+        sess = mock.Mock()
+        sess.put = mock.Mock(return_value=response)
+
+        body = {"port_id": "3"}
+        self.assertEqual(response.body, sot.add_interface(sess, **body))
+
+        url = 'routers/IDENTIFIER/add_router_interface'
+        sess.put.assert_called_with(url, endpoint_filter=sot.service,
+                                    json=body)
+
+    def test_remove_interface_subnet(self):
+        # Remove subnet from a router
         sot = router.Router(EXAMPLE)
         response = mock.Mock()
         response.body = {"subnet_id": "3", "port_id": "2"}
         response.json = mock.Mock(return_value=response.body)
         sess = mock.Mock()
         sess.put = mock.Mock(return_value=response)
-
-        self.assertEqual(response.body, sot.remove_interface(sess, '3'))
+        body = {"subnet_id": "3"}
+        self.assertEqual(response.body, sot.remove_interface(sess, **body))
 
         url = 'routers/IDENTIFIER/remove_router_interface'
-        body = {"subnet_id": "3"}
+        sess.put.assert_called_with(url, endpoint_filter=sot.service,
+                                    json=body)
+
+    def test_remove_interface_port(self):
+        # Remove port from a router
+        sot = router.Router(EXAMPLE)
+        response = mock.Mock()
+        response.body = {"subnet_id": "3", "port_id": "3"}
+        response.json = mock.Mock(return_value=response.body)
+        sess = mock.Mock()
+        sess.put = mock.Mock(return_value=response)
+        body = {"port_id": "3"}
+        self.assertEqual(response.body, sot.remove_interface(sess, **body))
+
+        url = 'routers/IDENTIFIER/remove_router_interface'
         sess.put.assert_called_with(url, endpoint_filter=sot.service,
                                     json=body)

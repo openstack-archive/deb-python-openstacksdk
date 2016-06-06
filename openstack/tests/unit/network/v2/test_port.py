@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
+
 import testtools
 
 from openstack.network.v2 import port
@@ -37,6 +39,9 @@ EXAMPLE = {
     'port_security_enabled': True,
     'dns_assignment': [{'19': 19}],
     'dns_name': '20',
+    'description': '21',
+    'created_at': '2016-03-09T12:14:57.233772',
+    'updated_at': '2016-07-09T12:14:57.233772',
 }
 
 
@@ -56,7 +61,7 @@ class TestPort(testtools.TestCase):
 
     def test_make_it(self):
         sot = port.Port(EXAMPLE)
-        self.assertEqual(EXAMPLE['admin_state_up'], sot.admin_state_up)
+        self.assertTrue(sot.is_admin_state_up)
         self.assertEqual(EXAMPLE['allowed_address_pairs'],
                          sot.allowed_address_pairs)
         self.assertEqual(EXAMPLE['binding:host_id'], sot.binding_host_id)
@@ -76,7 +81,13 @@ class TestPort(testtools.TestCase):
         self.assertEqual(EXAMPLE['tenant_id'], sot.project_id)
         self.assertEqual(EXAMPLE['security_groups'], sot.security_group_ids)
         self.assertEqual(EXAMPLE['status'], sot.status)
-        self.assertEqual(EXAMPLE['port_security_enabled'],
-                         sot.is_port_security_enabled)
+        self.assertTrue(sot.is_port_security_enabled)
         self.assertEqual(EXAMPLE['dns_assignment'], sot.dns_assignment)
         self.assertEqual(EXAMPLE['dns_name'], sot.dns_name)
+        self.assertEqual(EXAMPLE['description'], sot.description)
+        dt = datetime.datetime(2016, 3, 9, 12, 14, 57, 233772).replace(
+            tzinfo=None)
+        self.assertEqual(dt, sot.created_at.replace(tzinfo=None))
+        dt = datetime.datetime(2016, 7, 9, 12, 14, 57, 233772).replace(
+            tzinfo=None)
+        self.assertEqual(dt, sot.updated_at.replace(tzinfo=None))

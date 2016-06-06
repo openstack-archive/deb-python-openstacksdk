@@ -25,6 +25,7 @@ EXAMPLE = {
     'protocol_port': 5,
     'subnet_id': '6',
     'weight': 7,
+    'name': '8',
 }
 
 
@@ -45,12 +46,13 @@ class TestPoolMember(testtools.TestCase):
     def test_make_it(self):
         sot = pool_member.PoolMember(EXAMPLE)
         self.assertEqual(EXAMPLE['address'], sot.address)
-        self.assertEqual(EXAMPLE['admin_state_up'], sot.admin_state_up)
+        self.assertTrue(sot.is_admin_state_up)
         self.assertEqual(EXAMPLE['id'], sot.id)
         self.assertEqual(EXAMPLE['tenant_id'], sot.project_id)
         self.assertEqual(EXAMPLE['protocol_port'], sot.protocol_port)
         self.assertEqual(EXAMPLE['subnet_id'], sot.subnet_id)
         self.assertEqual(EXAMPLE['weight'], sot.weight)
+        self.assertEqual(EXAMPLE['name'], sot.name)
 
     def test_create_body(self):
         params = copy.deepcopy(EXAMPLE)

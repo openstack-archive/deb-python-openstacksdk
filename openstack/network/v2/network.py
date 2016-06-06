@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from openstack import format
 from openstack.network import network_service
 from openstack import resource
 
@@ -28,15 +29,43 @@ class Network(resource.Resource):
     allow_list = True
 
     # Properties
-    #: The administrative state of the network, which is up ``True`` or
-    #: down ``False``. *Type: bool*
-    admin_state_up = resource.prop('admin_state_up', type=bool)
     #: Availability zone hints to use when scheduling the network.
     #: *Type: list of availability zone names*
     availability_zone_hints = resource.prop('availability_zone_hints')
     #: Availability zones for the network.
     #: *Type: list of availability zone names*
     availability_zones = resource.prop('availability_zones')
+    #: Timestamp when the network was created.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
+    created_at = resource.prop('created_at', type=format.ISO8601)
+    #: The network description.
+    description = resource.prop('description')
+    #: The ID of the IPv4 address scope for the network.
+    ipv4_address_scope_id = resource.prop('ipv4_address_scope')
+    #: The ID of the IPv6 address scope for the network.
+    ipv6_address_scope_id = resource.prop('ipv6_address_scope')
+    #: The administrative state of the network, which is up ``True`` or
+    #: down ``False``. *Type: bool*
+    is_admin_state_up = resource.prop('admin_state_up', type=bool)
+    #: Whether or not this is the default external network.
+    #: *Type: bool*
+    is_default = resource.prop('is_default', type=bool)
+    #: The port security status, which is enabled ``True`` or disabled
+    #: ``False``. *Type: bool* *Default: False*
+    is_port_security_enabled = resource.prop('port_security_enabled',
+                                             type=bool,
+                                             default=False)
+    #: Whether or not the router is external.
+    #: *Type: bool* *Default: False*
+    is_router_external = resource.prop('router:external',
+                                       type=bool,
+                                       default=False)
+    #: Indicates whether this network is shared across all tenants.
+    #: By default, only administrative users can change this value.
+    #: *Type: bool*
+    is_shared = resource.prop('shared', type=bool)
+    #: Read-only. The maximum transmission unit (MTU) of the network resource.
+    mtu = resource.prop('mtu', type=int)
     #: The network name.
     name = resource.prop('name')
     #: The ID of the project this network is associated with.
@@ -49,31 +78,12 @@ class Network(resource.Resource):
     #: An isolated segment ID on the physical network. The provider
     #: network type defines the segmentation model.
     provider_segmentation_id = resource.prop('provider:segmentation_id')
-    #: Whether or not the router is external. *Type: bool*
-    router_external = resource.prop('router:external')
-    #: Whether or not the router is 'External' or 'Internal'.
-    router_type = resource.prop('router_type')
     segments = resource.prop('segments')
-    #: Indicates whether this network is shared across all tenants.
-    #: By default, only administrative users can change this value.
-    #: *Type: bool*
-    shared = resource.prop('shared', type=bool)
     #: The network status.
     status = resource.prop('status')
     #: The associated subnet IDs.
     #: *Type: list of strs of the subnet IDs*
     subnet_ids = resource.prop('subnets', type=list)
-    #: Read-only. The maximum transmission unit (MTU) of the network resource.
-    mtu = resource.prop('mtu', type=int)
-    #: The port security status, which is enabled ``True`` or disabled
-    #: ``False``. *Type: bool* *Default: False*
-    is_port_security_enabled = resource.prop('port_security_enabled',
-                                             type=bool,
-                                             default=False)
-
-    def is_external(self):
-        if self.router_external is not None:
-            return bool(self.router_external)
-        if self.router_type == 'External':
-            return True
-        return False
+    #: Timestamp when the network was last updated.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
+    updated_at = resource.prop('updated_at', type=format.ISO8601)
