@@ -16,7 +16,6 @@ from openstack import resource
 
 class Secret(resource.Resource):
     id_attribute = 'secret_ref'
-    resource_key = 'secret'
     resources_key = 'secrets'
     base_path = '/secrets'
     service = key_manager_service.KeyManagerService()
@@ -46,5 +45,5 @@ class Secret(resource.Resource):
     secret_ref = resource.prop('secret_ref')
     #: The status of this secret
     status = resource.prop('status')
-    #: A timestamp when this secret was updated
+    #: A timestamp when this secret was updated.
     updated_at = resource.prop('updated')

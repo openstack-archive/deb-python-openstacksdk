@@ -23,7 +23,7 @@ FAKE_ID = 'ce8ae86c-9810-4cb1-8888-7fb53bc523bf'
 FAKE_NAME = 'test_stack'
 FAKE = {
     'capabilities': '1',
-    'creation_time': '2',
+    'creation_time': '2015-03-09T12:15:57.233772',
     'description': '3',
     'disable_rollback': True,
     'id': FAKE_ID,
@@ -39,7 +39,7 @@ FAKE = {
     'template_description': '13',
     'template_url': 'http://www.example.com/wordpress.yaml',
     'timeout_mins': '14',
-    'updated_time': '15',
+    'updated_time': '2015-03-09T12:30:00.000000',
 }
 FAKE_CREATE_RESPONSE = {
     'stack': {
@@ -69,7 +69,7 @@ class TestStack(testtools.TestCase):
         self.assertEqual(FAKE['capabilities'], sot.capabilities)
         self.assertEqual(FAKE['creation_time'], sot.created_at)
         self.assertEqual(FAKE['description'], sot.description)
-        self.assertEqual(FAKE['disable_rollback'], sot.disable_rollback)
+        self.assertTrue(sot.is_rollback_disabled)
         self.assertEqual(FAKE['id'], sot.id)
         self.assertEqual(FAKE['links'], sot.links)
         self.assertEqual(FAKE['notification_topics'],

@@ -31,8 +31,8 @@ FAKE = {
         }
     },
     'type': 'senlin.policy.deletion-1.0',
-    'created_at': '2015-08-10T09:14:53',
-    'updated_at': None,
+    'created_at': '2015-10-10T12:46:36.000000',
+    'updated_at': '2016-10-10T12:46:36.000000',
     'data': {},
 }
 

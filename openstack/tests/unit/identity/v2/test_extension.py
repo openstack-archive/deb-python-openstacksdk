@@ -22,7 +22,7 @@ EXAMPLE = {
     'links': '3',
     'name': '4',
     'namespace': '5',
-    'updated': '6',
+    'updated': '2015-03-09T12:14:57.233772',
 }
 
 
@@ -47,7 +47,7 @@ class TestExtension(testtools.TestCase):
         self.assertEqual(EXAMPLE['links'], sot.links)
         self.assertEqual(EXAMPLE['name'], sot.name)
         self.assertEqual(EXAMPLE['namespace'], sot.namespace)
-        self.assertEqual(EXAMPLE['updated'], sot.updated)
+        self.assertEqual(EXAMPLE['updated'], sot.updated_at)
 
     def test_list(self):
         resp = mock.Mock()

@@ -39,9 +39,9 @@ class Action(resource.Resource):
     #: Interval in seconds between two consecutive executions.
     interval = resource.prop('interval')
     #: The time the action was started.
-    start_time = resource.prop('start_time')
+    start_at = resource.prop('start_time')
     #: The time the action completed execution.
-    end_time = resource.prop('end_time')
+    end_at = resource.prop('end_time')
     #: The timeout in seconds.
     timeout = resource.prop('timeout')
     #: Current status of the action.

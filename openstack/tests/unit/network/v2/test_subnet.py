@@ -30,6 +30,10 @@ EXAMPLE = {
     'network_id': '10',
     'tenant_id': '11',
     'subnetpool_id': '12',
+    'description': '13',
+    'created_at': '2016-03-09T12:14:57.233772',
+    'updated_at': '2016-07-09T12:14:57.233772',
+    'segment_id': '16',
 }
 
 
@@ -52,7 +56,7 @@ class TestSubnet(testtools.TestCase):
         self.assertEqual(EXAMPLE['allocation_pools'], sot.allocation_pools)
         self.assertEqual(EXAMPLE['cidr'], sot.cidr)
         self.assertEqual(EXAMPLE['dns_nameservers'], sot.dns_nameservers)
-        self.assertEqual(EXAMPLE['enable_dhcp'], sot.enable_dhcp)
+        self.assertTrue(sot.is_dhcp_enabled)
         self.assertEqual(EXAMPLE['gateway_ip'], sot.gateway_ip)
         self.assertEqual(EXAMPLE['host_routes'], sot.host_routes)
         self.assertEqual(EXAMPLE['id'], sot.id)
@@ -63,3 +67,7 @@ class TestSubnet(testtools.TestCase):
         self.assertEqual(EXAMPLE['network_id'], sot.network_id)
         self.assertEqual(EXAMPLE['tenant_id'], sot.project_id)
         self.assertEqual(EXAMPLE['subnetpool_id'], sot.subnet_pool_id)
+        self.assertEqual(EXAMPLE['description'], sot.description)
+        self.assertEqual(EXAMPLE['created_at'], sot.created_at)
+        self.assertEqual(EXAMPLE['updated_at'], sot.updated_at)
+        self.assertEqual(EXAMPLE['segment_id'], sot.segment_id)

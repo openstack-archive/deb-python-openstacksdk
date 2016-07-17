@@ -21,11 +21,11 @@ from openstack.compute.v2 import server as _server
 from openstack.compute.v2 import server_group as _server_group
 from openstack.compute.v2 import server_interface as _server_interface
 from openstack.compute.v2 import server_ip
-from openstack import proxy
-from openstack import resource
+from openstack import proxy2
+from openstack import resource2
 
 
-class Proxy(proxy.BaseProxy):
+class Proxy(proxy2.BaseProxy):
 
     def find_extension(self, name_or_id, ignore_missing=True):
         """Find a single extension
@@ -42,16 +42,13 @@ class Proxy(proxy.BaseProxy):
         return self._find(extension.Extension, name_or_id,
                           ignore_missing=ignore_missing)
 
-    def extensions(self, **query):
+    def extensions(self):
         """Retrieve a generator of extensions
-
-        :param kwargs \*\*query: Optional query parameters to be sent to limit
-                                 the resources being returned.
 
         :returns: A generator of extension instances.
         :rtype: :class:`~openstack.compute.v2.extension.Extension`
         """
-        return self._list(extension.Extension, paginated=False, **query)
+        return self._list(extension.Extension, paginated=False)
 
     def find_flavor(self, name_or_id, ignore_missing=True):
         """Find a single flavor
@@ -197,66 +194,29 @@ class Proxy(proxy.BaseProxy):
         if isinstance(res, base):
             return res
         else:
-            return base({"id": res})
+            return base(id=res)
 
-    def get_image_metadata(self, image, key=None):
+    def get_image_metadata(self, image):
         """Return a dictionary of metadata for an image
 
-        :param server: Either the ID of an image or a
+        :param image: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
-        :param key: An optional key to retrieve from the image's metadata.
-                    When no ``key`` is specified, all metadata is retrieved.
 
-        :returns: A dictionary of the image's metadata. All keys and values
-                  are Unicode text.
-        :rtype: dict
+        :returns: A :class:`~openstack.compute.v2.image.Image` with only the
+                  image's metadata. All keys and values are Unicode text.
+        :rtype: :class:`~openstack.compute.v2.image.Image`
         """
         res = self._get_base_resource(image, _image.Image)
-        return res.get_metadata(self.session, key)
+        metadata = res.get_metadata(self.session)
+        result = _image.Image.existing(id=res.id, metadata=metadata)
+        return result
 
-    def create_image_metadata(self, image, **metadata):
-        """Create metadata for an image
-
-        :param server: Either the ID of an image or a
-                       :class:`~openstack.compute.v2.image.Image` or
-                       :class:`~openstack.compute.v2.image.ImageDetail`
-                       instance.
-        :param kwargs metadata: Key/value pairs to be added as metadata
-                                on the image. All keys and values
-                                are stored as Unicode.
-
-        :returns: A dictionary of the metadata that was created on the image.
-                  All keys and values are Unicode text.
-        :rtype: dict
-        """
-        res = self._get_base_resource(image, _image.Image)
-        return res.create_metadata(self.session, **metadata)
-
-    def replace_image_metadata(self, image, **metadata):
-        """Replace metadata for an image
-
-        :param server: Either the ID of a image or a
-                       :class:`~openstack.compute.v2.image.Image` or
-                       :class:`~openstack.compute.v2.image.ImageDetail`
-                       instance.
-        :param kwargs metadata: Key/value pairs to be added as metadata
-                                on the image. Any other existing metadata
-                                is removed. All keys and values are stored
-                                as Unicode.
-
-        :returns: A dictionary of the metadata for the image. All keys and
-                  values are Unicode text.
-        :rtype: dict
-        """
-        res = self._get_base_resource(image, _image.Image)
-        return res.replace_metadata(self.session, **metadata)
-
-    def update_image_metadata(self, image, **metadata):
+    def set_image_metadata(self, image, **metadata):
         """Update metadata for an image
 
-        :param server: Either the ID of an image or a
+        :param image: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
@@ -265,26 +225,30 @@ class Proxy(proxy.BaseProxy):
                                 by this call. All keys and values are stored
                                 as Unicode.
 
-        :returns: A dictionary of the metadata for the image. All keys and
-                  values are Unicode text.
-        :rtype: dict
+        :returns: A :class:`~openstack.compute.v2.image.Image` with only the
+                  image's metadata. All keys and values are Unicode text.
+        :rtype: :class:`~openstack.compute.v2.image.Image`
         """
         res = self._get_base_resource(image, _image.Image)
-        return res.update_metadata(self.session, **metadata)
+        metadata = res.set_metadata(self.session, **metadata)
+        result = _image.Image.existing(id=res.id, metadata=metadata)
+        return result
 
-    def delete_image_metadata(self, image, key):
+    def delete_image_metadata(self, image, keys):
         """Delete metadata for an image
 
-        :param server: Either the ID of an image or a
+        Note: This method will do a HTTP DELETE request for every key in keys.
+
+        :param image: Either the ID of an image or a
                        :class:`~openstack.compute.v2.image.Image` or
                        :class:`~openstack.compute.v2.image.ImageDetail`
                        instance.
-        :param key: The key to delete
+        :param list keys: The keys to delete.
 
         :rtype: ``None``
         """
         res = self._get_base_resource(image, _image.Image)
-        return res.delete_metadata(self.session, key)
+        return res.delete_metadata(self.session, keys)
 
     def create_keypair(self, **attrs):
         """Create a new keypair from attributes
@@ -341,30 +305,13 @@ class Proxy(proxy.BaseProxy):
         return self._find(_keypair.Keypair, name_or_id,
                           ignore_missing=ignore_missing)
 
-    def keypairs(self, **query):
+    def keypairs(self):
         """Return a generator of keypairs
-
-        :param kwargs \*\*query: Optional query parameters to be sent to limit
-                                 the resources being returned.
 
         :returns: A generator of keypair objects
         :rtype: :class:`~openstack.compute.v2.keypair.Keypair`
         """
-        return self._list(_keypair.Keypair, paginated=False, **query)
-
-    def update_keypair(self, keypair, **attrs):
-        """Update a keypair
-
-        :param keypair: Either the ID of a keypair or a
-                        :class:`~openstack.compute.v2.keypair.Keypair`
-                        instance.
-        :attrs kwargs: The attributes to update on the keypair represented
-                       by ``keypair``.
-
-        :returns: The updated keypair
-        :rtype: :class:`~openstack.compute.v2.keypair.Keypair`
-        """
-        return self._update(_keypair.Keypair, keypair, **attrs)
+        return self._list(_keypair.Keypair, paginated=False)
 
     def get_limits(self):
         """Retrieve limits that are applied to the project's account
@@ -467,12 +414,6 @@ class Proxy(proxy.BaseProxy):
         :returns: A generator of server instances.
         """
         srv = _server.ServerDetail if details else _server.Server
-
-        # Server expects changes-since, but we use an underscore
-        # so it can be a proper Python name.
-        if "changes_since" in query:
-            query["changes-since"] = query.pop("changes_since")
-
         return self._list(srv, paginated=True, **query)
 
     def update_server(self, server, **attrs):
@@ -488,10 +429,142 @@ class Proxy(proxy.BaseProxy):
         """
         return self._update(_server.Server, server, **attrs)
 
+    def change_server_password(self, server, new_password):
+        """Change the administrator password
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param str new_password: The new password to be set.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        server.change_password(self.session, new_password)
+
+    def reboot_server(self, server, reboot_type):
+        """Reboot a server
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param str reboot_type: The type of reboot to perform.
+                                "HARD" and "SOFT" are the current options.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        server.reboot(self.session, reboot_type)
+
+    def rebuild_server(self, server, name, admin_password, **attrs):
+        """Rebuild a server
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param str name: The name of the server
+        :param str admin_password: The administrator password
+        :param bool preserve_ephemeral: Indicates whether the server
+            is rebuilt with the preservation of the ephemeral partition.
+            *Default: False*
+        :param str image: The id of an image to rebuild with. *Default: None*
+        :param str access_ipv4: The IPv4 address to rebuild with.
+                                *Default: None*
+        :param str access_ipv6: The IPv6 address to rebuild with.
+                                *Default: None*
+        :param dict metadata: A dictionary of metadata to rebuild with.
+                               *Default: None*
+        :param list personality: A list of dictionaries, each including a
+                                 **path** and **contents** key, to be injected
+                                 into the rebuilt server at launch.
+                                 *Default: None*
+
+        :returns: The rebuilt :class:`~openstack.compute.v2.server.Server`
+                  instance.
+        """
+        server = self._get_resource(_server.Server, server)
+        return server.rebuild(self.session, name, admin_password, **attrs)
+
+    def resize_server(self, server, flavor):
+        """Resize a server
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param flavor: Either the ID of a flavor or a
+                       :class:`~openstack.compute.v2.flavor.Flavor` instance.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        flavor_id = resource2.Resource._get_id(flavor)
+        server.resize(self.session, flavor_id)
+
+    def confirm_server_resize(self, server):
+        """Confirm a server resize
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        server.confirm_resize(self.session)
+
+    def revert_server_resize(self, server):
+        """Revert a server resize
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        server.revert_resize(self.session)
+
+    def create_server_image(self, server, name, metadata=None):
+        """Create an image from a server
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param str name: The name of the image to be created.
+        :param dict metadata: A dictionary of metadata to be set on the image.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        server.create_image(self.session, name, metadata)
+
+    def add_security_group_to_server(self, server, security_group):
+        """Add a security group to a server
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param security_group: Either the ID of a security group or a
+            :class:`~openstack.network.v2.security_group.SecurityGroup`
+            instance.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        security_group_id = resource2.Resource._get_id(security_group)
+        server.add_security_group(self.session, security_group_id)
+
+    def remove_security_group_from_server(self, server, security_group):
+        """Add a security group to a server
+
+        :param server: Either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server` instance.
+        :param security_group: Either the ID of a security group or a
+            :class:`~openstack.network.v2.security_group.SecurityGroup`
+            instance.
+
+        :returns: None
+        """
+        server = self._get_resource(_server.Server, server)
+        security_group_id = resource2.Resource._get_id(security_group)
+        server.remove_security_group(self.session, security_group_id)
+
     def wait_for_server(self, server, status='ACTIVE', failures=['ERROR'],
                         interval=2, wait=120):
-        return resource.wait_for_status(self.session, server, status,
-                                        failures, interval, wait)
+        return resource2.wait_for_status(self.session, server, status,
+                                         failures, interval, wait)
 
     def create_server_interface(self, server, **attrs):
         """Create a new server interface from attributes
@@ -506,9 +579,9 @@ class Proxy(proxy.BaseProxy):
         :returns: The results of server interface creation
         :rtype: :class:`~openstack.compute.v2.server_interface.ServerInterface`
         """
-        server_id = resource.Resource.get_id(server)
+        server_id = resource2.Resource._get_id(server)
         return self._create(_server_interface.ServerInterface,
-                            path_args={'server_id': server_id}, **attrs)
+                            server_id=server_id, **attrs)
 
     def delete_server_interface(self, server_interface, server=None,
                                 ignore_missing=True):
@@ -530,13 +603,13 @@ class Proxy(proxy.BaseProxy):
 
         :returns: ``None``
         """
-        if isinstance(server_interface, _server_interface.ServerInterface):
-            server_id = server_interface.server_id
-        else:
-            server_id = resource.Resource.get_id(server)
+        server_id = self._get_uri_attribute(server_interface, server,
+                                            "server_id")
+        server_interface = resource2.Resource._get_id(server_interface)
 
-        self._delete(_server_interface.ServerInterface, server_interface,
-                     path_args={'server_id': server_id},
+        self._delete(_server_interface.ServerInterface,
+                     port_id=server_interface,
+                     server_id=server_id,
                      ignore_missing=ignore_missing)
 
     def get_server_interface(self, server_interface, server=None):
@@ -556,187 +629,77 @@ class Proxy(proxy.BaseProxy):
         :raises: :class:`~openstack.exceptions.ResourceNotFound`
                  when no resource can be found.
         """
-        if isinstance(server_interface, _server_interface.ServerInterface):
-            server_id = server_interface.server_id
-        else:
-            server_id = resource.Resource.get_id(server)
+        server_id = self._get_uri_attribute(server_interface, server,
+                                            "server_id")
+        server_interface = resource2.Resource._get_id(server_interface)
 
-        return self._get(_server_interface.ServerInterface, server_interface,
-                         path_args={'server_id': server_id})
+        return self._get(_server_interface.ServerInterface,
+                         server_id=server_id, port_id=server_interface)
 
-    def server_interfaces(self, server, **query):
+    def server_interfaces(self, server):
         """Return a generator of server interfaces
 
         :param server: The server can be either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server`.
-        :param kwargs \*\*query: Optional query parameters to be sent to limit
-                                 the resources being returned.
 
         :returns: A generator of ServerInterface objects
         :rtype: :class:`~openstack.compute.v2.server_interface.ServerInterface`
         """
-        server_id = resource.Resource.get_id(server)
+        server_id = resource2.Resource._get_id(server)
         return self._list(_server_interface.ServerInterface, paginated=False,
-                          path_args={'server_id': server_id},
-                          **query)
+                          server_id=server_id)
 
-    def find_server_ip(self, name_or_id, ignore_missing=True):
-        """Find a single server IP
-
-        :param name_or_id: The name or ID of a server IP.
-        :param bool ignore_missing: When set to ``False``
-                    :class:`~openstack.exceptions.ResourceNotFound` will be
-                    raised when the resource does not exist.
-                    When set to ``True``, None will be returned when
-                    attempting to find a nonexistent resource.
-        :returns: One :class:`~openstack.compute.v2.server_ip.ServerIP` or None
-        """
-        return self._find(server_ip.ServerIP, name_or_id,
-                          ignore_missing=ignore_missing)
-
-    def server_ips(self, **query):
+    def server_ips(self, server, network_label=None):
         """Return a generator of server IPs
 
-        :param kwargs \*\*query: Optional query parameters to be sent to limit
-                                 the resources being returned.
+        :param server: The server can be either the ID of a server or a
+                       :class:`~openstack.compute.v2.server.Server`.
+        :param network_label: The name of a particular network to list
+                              IP addresses from.
 
         :returns: A generator of ServerIP objects
         :rtype: :class:`~openstack.compute.v2.server_ip.ServerIP`
         """
-        return self._list(server_ip.ServerIP, paginated=False, **query)
+        server_id = resource2.Resource._get_id(server)
+        return self._list(server_ip.ServerIP, paginated=False,
+                          server_id=server_id, network_label=network_label)
 
-    def resize_server(self, server, flavor):
-        """Resize a server
-
-        :param server: Either the ID of a server or a
-                       :class:`~openstack.compute.v2.server.Server` instance.
-        :param falvor: The ID or name of the flavor used to resize the server.
-
-        :returns: None
-        """
-        server = _server.Server.from_id(server)
-        server.resize(self.session, flavor)
-
-    def confirm_resize_server(self, server):
-        """Confirm a pending resize_server action
-
-        :param server: Either the ID of a server or a
-                      :class:`~openstack.compute.v2.server.Server` instance.
-
-        :returns: None
-        """
-        server = _server.Server.from_id(server)
-        server.confirm_resize(self.session)
-
-    def revert_resize_server(self, server):
-        """Cancel and revert a pending resize_server action
-
-        :param server: Either the ID of a server or a
-                      :class:`~openstack.compute.v2.server.Server` instance.
-
-        :returns: None
-        """
-        server = _server.Server.from_id(server)
-        server.revert_resize(self.session)
-
-    def rebuild_server(self, server, image, name=None, admin_password=None,
-                       **attrs):
-        """Rebuild a server
-
-        :param server: Either the ID of a server or a
-                      :class:`~openstack.compute.v2.server.Server` instance.
-        :param image: The ID or name or a
-                      :class:`~openstack.compute.v2.image.Image` or full
-                      URL of the image used to rebuild the server with.
-        :param name: New name for the server.
-        :param admin_password: New admin password for the server.
-        :param kwargs \*\*attrs: The attributes to rebuild the server.
-
-        :returns: The rebuilt server
-        :rtype: :class:`~openstack.compute.v2.server.Server`
-        """
-        if isinstance(image, _image.Image):
-            image_ref = image.id
-        else:
-            image_obj = self.find_image(image)
-            if image_obj:
-                image_ref = image_obj.id
-            else:
-                # the 'image' could be a full url
-                image_ref = image
-
-        server = _server.Server.from_id(server)
-        return server.rebuild(self.session, name, image_ref, admin_password,
-                              **attrs)
-
-    def availability_zones(self, **query):
+    def availability_zones(self, details=False):
         """Return a generator of availability zones
 
-        :param kwargs \*\*query: Optional query parameters to be sent
-                                 to limit the resources being returned.
+        :param bool details: Return extra details about the availability
+                             zones. This defaults to `False` as it generally
+                             requires extra permission.
 
         :returns: A generator of availability zone
         :rtype: :class:`~openstack.compute.v2.availability_zone.
         AvailabilityZone`
         """
-        return self._list(availability_zone.AvailabilityZone,
-                          paginated=False, **query)
+        if details:
+            az = availability_zone.AvailabilityZoneDetail
+        else:
+            az = availability_zone.AvailabilityZone
 
-    def get_server_metadata(self, server, key=None):
+        return self._list(az, paginated=False)
+
+    def get_server_metadata(self, server):
         """Return a dictionary of metadata for a server
 
         :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
-        :param key: An optional key to retrieve from the server's metadata.
-                    When no ``key`` is specified, all metadata is retrieved.
 
-        :returns: A dictionary of the server's metadata. All keys and values
-                  are Unicode text.
-        :rtype: dict
+        :returns: A :class:`~openstack.compute.v2.server.Server` with only the
+                  server's metadata. All keys and values are Unicode text.
+        :rtype: :class:`~openstack.compute.v2.server.Server`
         """
         res = self._get_base_resource(server, _server.Server)
-        return res.get_metadata(self.session, key)
+        metadata = res.get_metadata(self.session)
+        result = _server.Server.existing(id=res.id, metadata=metadata)
+        return result
 
-    def create_server_metadata(self, server, **metadata):
-        """Create metadata for a server
-
-        :param server: Either the ID of a server or a
-                       :class:`~openstack.compute.v2.server.Server` or
-                       :class:`~openstack.compute.v2.server.ServerDetail`
-                       instance.
-        :param kwargs metadata: Key/value pairs to be added as metadata
-                                on the server. All keys and values
-                                are stored as Unicode.
-
-        :returns: A dictionary of the metadata that was created on the server.
-                  All keys and values are Unicode text.
-        :rtype: dict
-        """
-        res = self._get_base_resource(server, _server.Server)
-        return res.create_metadata(self.session, **metadata)
-
-    def replace_server_metadata(self, server, **metadata):
-        """Replace metadata for a server
-
-        :param server: Either the ID of a server or a
-                       :class:`~openstack.compute.v2.server.Server` or
-                       :class:`~openstack.compute.v2.server.ServerDetail`
-                       instance.
-        :param kwargs metadata: Key/value pairs to be added as metadata
-                                on the server. Any other existing metadata
-                                is removed. All keys and values are stored
-                                as Unicode.
-
-        :returns: A dictionary of the metadata for the server. All keys and
-                  values are Unicode text.
-        :rtype: dict
-        """
-        res = self._get_base_resource(server, _server.Server)
-        return res.replace_metadata(self.session, **metadata)
-
-    def update_server_metadata(self, server, **metadata):
+    def set_server_metadata(self, server, **metadata):
         """Update metadata for a server
 
         :param server: Either the ID of a server or a
@@ -748,26 +711,30 @@ class Proxy(proxy.BaseProxy):
                                 by this call. All keys and values are stored
                                 as Unicode.
 
-        :returns: A dictionary of the metadata for the server. All keys and
-                  values are Unicode text.
-        :rtype: dict
+        :returns: A :class:`~openstack.compute.v2.server.Server` with only the
+                  server's metadata. All keys and values are Unicode text.
+        :rtype: :class:`~openstack.compute.v2.server.Server`
         """
         res = self._get_base_resource(server, _server.Server)
-        return res.update_metadata(self.session, **metadata)
+        metadata = res.set_metadata(self.session, **metadata)
+        result = _server.Server.existing(id=res.id, metadata=metadata)
+        return result
 
-    def delete_server_metadata(self, server, key):
+    def delete_server_metadata(self, server, keys):
         """Delete metadata for a server
+
+        Note: This method will do a HTTP DELETE request for every key in keys.
 
         :param server: Either the ID of a server or a
                        :class:`~openstack.compute.v2.server.Server` or
                        :class:`~openstack.compute.v2.server.ServerDetail`
                        instance.
-        :param key: The key to delete
+        :param list keys: The keys to delete
 
         :rtype: ``None``
         """
         res = self._get_base_resource(server, _server.Server)
-        return res.delete_metadata(self.session, key)
+        return res.delete_metadata(self.session, keys)
 
     def create_server_group(self, **attrs):
         """Create a new server group from attributes
@@ -839,14 +806,14 @@ class Proxy(proxy.BaseProxy):
         """
         return self._list(_server_group.ServerGroup, paginated=False, **query)
 
-    def hypervisors(self, **query):
+    def hypervisors(self):
         """Return a generator of hypervisor
 
         :returns: A generator of hypervisor
         :rtype: class: `~openstack.compute.v2.hypervisor.Hypervisor`
         """
 
-        return self._list(_hypervisor.Hypervisor, paginated=False, **query)
+        return self._list(_hypervisor.Hypervisor, paginated=False)
 
     def find_hypervisor(self, name_or_id, ignore_missing=True):
         """Find a hypervisor from name or id to get the corresponding info

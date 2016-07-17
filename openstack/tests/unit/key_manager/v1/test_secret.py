@@ -19,12 +19,12 @@ EXAMPLE = {
     'algorithm': '1',
     'bit_length': '2',
     'content_types': '3',
-    'expiration': '4',
+    'expiration': '2017-03-09T12:14:57.233772',
     'mode': '5',
     'name': '6',
     'secret_ref': IDENTIFIER,
     'status': '8',
-    'updated': '9',
+    'updated': '2015-03-09T12:15:57.233772',
 }
 
 
@@ -32,7 +32,7 @@ class TestSecret(testtools.TestCase):
 
     def test_basic(self):
         sot = secret.Secret()
-        self.assertEqual('secret', sot.resource_key)
+        self.assertIsNone(sot.resource_key)
         self.assertEqual('secrets', sot.resources_key)
         self.assertEqual('/secrets', sot.base_path)
         self.assertEqual('key-manager', sot.service.service_type)

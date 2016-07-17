@@ -16,11 +16,11 @@ from openstack.image.v2 import member
 
 IDENTIFIER = 'IDENTIFIER'
 EXAMPLE = {
-    'created_at': '2014-11-19T16:58:24.123450Z',
+    'created_at': '2015-03-09T12:14:57.233772',
     'image_id': '2',
     'member_id': IDENTIFIER,
     'status': '4',
-    'updated_at': '2014-11-19T16:58:24.123450Z',
+    'updated_at': '2015-03-09T12:15:57.233772',
 }
 
 

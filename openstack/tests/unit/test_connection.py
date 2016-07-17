@@ -11,8 +11,8 @@
 # under the License.
 
 import os
-import tempfile
 
+import fixtures
 import mock
 import os_client_config
 
@@ -25,6 +25,7 @@ CONFIG_AUTH_URL = "http://127.0.0.1:5000/v2.0"
 CONFIG_USERNAME = "BozoTheClown"
 CONFIG_PASSWORD = "TopSecret"
 CONFIG_PROJECT = "TheGrandPrizeGame"
+CONFIG_CACERT = "TrustMe"
 
 CLOUD_CONFIG = """
 clouds:
@@ -35,8 +36,25 @@ clouds:
       username: {username}
       password: {password}
       project_name: {project}
+  insecure:
+    auth:
+      auth_url: {auth_url}
+      username: {username}
+      password: {password}
+      project_name: {project}
+    cacert: {cacert}
+    insecure: True
+  cacert:
+    auth:
+      auth_url: {auth_url}
+      username: {username}
+      password: {password}
+      project_name: {project}
+    cacert: {cacert}
+    insecure: False
 """.format(auth_url=CONFIG_AUTH_URL, username=CONFIG_USERNAME,
-           password=CONFIG_PASSWORD, project=CONFIG_PROJECT)
+           password=CONFIG_PASSWORD, project=CONFIG_PROJECT,
+           cacert=CONFIG_CACERT)
 
 
 class TestConnection(base.TestCase):
@@ -46,8 +64,8 @@ class TestConnection(base.TestCase):
         mock_profile = mock.Mock()
         mock_profile.get_services = mock.Mock(return_value=[])
         conn = connection.Connection(profile=mock_profile, authenticator='2',
-                                     verify=True, user_agent='1')
-        args = {'auth': '2', 'user_agent': '1', 'verify': True}
+                                     verify=True, cert='cert', user_agent='1')
+        args = {'auth': '2', 'user_agent': '1', 'verify': True, 'cert': 'cert'}
         mock_session_init.assert_called_with(mock_profile, **args)
         self.assertEqual(mock_session_init, conn.session)
 
@@ -115,16 +133,14 @@ class TestConnection(base.TestCase):
     def _prepare_test_config(self):
         # Create a temporary directory where our test config will live
         # and insert it into the search path via OS_CLIENT_CONFIG_FILE.
-        # NOTE: If OCC stops popping OS_C_C_F off of os.environ, this
-        # will need to change to respect that. It currently works between
-        # tests because the environment variable is always wiped by OCC itself.
-        config_dir = tempfile.mkdtemp()
+        config_dir = self.useFixture(fixtures.TempDir()).path
         config_path = os.path.join(config_dir, "clouds.yaml")
 
         with open(config_path, "w") as conf:
             conf.write(CLOUD_CONFIG)
 
-        os.environ["OS_CLIENT_CONFIG_FILE"] = config_path
+        self.useFixture(fixtures.EnvironmentVariable(
+            "OS_CLIENT_CONFIG_FILE", config_path))
 
     def test_from_config_given_data(self):
         self._prepare_test_config()
@@ -171,6 +187,15 @@ class TestConnection(base.TestCase):
         # NOTE: Along the way, the `v` prefix gets added so we can build
         # up URLs with it.
         self.assertEqual("v" + version, pref.version)
+
+    def test_from_config_verify(self):
+        self._prepare_test_config()
+
+        sot = connection.from_config(cloud_name="insecure")
+        self.assertFalse(sot.session.verify)
+
+        sot = connection.from_config(cloud_name="cacert")
+        self.assertEqual(CONFIG_CACERT, sot.session.verify)
 
     def test_authorize_works(self):
         fake_session = mock.Mock()

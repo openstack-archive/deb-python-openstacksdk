@@ -30,7 +30,7 @@ class Container(resource.Resource):
     # Properties
     #: A URI for this container
     container_ref = resource.prop('container_ref')
-    #: The timestamp when this container was created
+    #: The timestamp when this container was created.
     created_at = resource.prop('created')
     #: The name of this container
     name = resource.prop('name')
@@ -40,5 +40,5 @@ class Container(resource.Resource):
     status = resource.prop('status')
     #: The type of this container
     type = resource.prop('type')
-    #: The timestamp when this container was updated
+    #: The timestamp when this container was updated.
     updated_at = resource.prop('updated')

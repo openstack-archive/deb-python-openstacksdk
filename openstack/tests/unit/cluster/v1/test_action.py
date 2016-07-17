@@ -25,8 +25,8 @@ FAKE = {
     'cause': 'RPC Request',
     'owner': None,
     'interval': -1,
-    'start_time': 144450000.0,
-    'end_time': 144450000.0,
+    'start_time': 1453414055.48672,
+    'end_time': 1453414055.48672,
     'timeout': 3600,
     'status': 'SUCCEEDED',
     'status_reason': 'Action completed successfully.',
@@ -34,8 +34,8 @@ FAKE = {
     'outputs': {},
     'depends_on': [],
     'depended_by': [],
-    'created_at': '2015-10-10T04:46:36.000000',
-    'updated_at': None,
+    'created_at': '2015-10-10T12:46:36.000000',
+    'updated_at': '2016-10-10T12:46:36.000000',
 }
 
 
@@ -62,8 +62,8 @@ class TestAction(testtools.TestCase):
         self.assertEqual(FAKE['cause'], sot.cause)
         self.assertEqual(FAKE['owner'], sot.owner_id)
         self.assertEqual(FAKE['interval'], sot.interval)
-        self.assertEqual(FAKE['start_time'], sot.start_time)
-        self.assertEqual(FAKE['end_time'], sot.end_time)
+        self.assertEqual(FAKE['start_time'], sot.start_at)
+        self.assertEqual(FAKE['end_time'], sot.end_at)
         self.assertEqual(FAKE['timeout'], sot.timeout)
         self.assertEqual(FAKE['status'], sot.status)
         self.assertEqual(FAKE['status_reason'], sot.status_reason)

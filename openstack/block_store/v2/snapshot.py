@@ -11,6 +11,7 @@
 # under the License.
 
 from openstack.block_store import block_store_service
+from openstack import format
 from openstack import resource
 
 
@@ -45,9 +46,9 @@ class Snapshot(resource.Resource):
     volume_id = resource.prop("volume_id")
     #: The size of the volume, in GBs.
     size = resource.prop("size", type=int)
-    #: Indicate whether to snapshot, even if the volume is attached.
-    #: Default is False.
-    force = resource.prop("force", type=bool)
+    #: Indicate whether to create snapshot, even if the volume is attached.
+    #: Default is ``False``. *Type: bool*
+    is_forced = resource.prop("force", type=format.BoolStr)
 
 
 class SnapshotDetail(Snapshot):

@@ -25,9 +25,11 @@ class Resource(resource.Resource):
     allow_list = True
 
     # Properties
-    #: UTC date & time not later than the first sample known for this resource
+    #: UTC date & time not later than the first sample known
+    #: for this resource.
     first_sample_at = resource.prop('first_sample_timestamp')
-    #: UTC date & time not earlier than the last sample known for this resource
+    #: UTC date & time not earlier than the last sample known
+    #: for this resource.
     last_sample_at = resource.prop('last_sample_timestamp')
     #: A list containing a self link and associated meter links
     links = resource.prop('links')

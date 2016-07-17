@@ -13,6 +13,8 @@
 import mock
 
 from openstack.network.v2 import _proxy
+from openstack.network.v2 import address_scope
+from openstack.network.v2 import agent
 from openstack.network.v2 import availability_zone
 from openstack.network.v2 import extension
 from openstack.network.v2 import floating_ip
@@ -22,13 +24,16 @@ from openstack.network.v2 import load_balancer
 from openstack.network.v2 import metering_label
 from openstack.network.v2 import metering_label_rule
 from openstack.network.v2 import network
+from openstack.network.v2 import network_ip_availability
 from openstack.network.v2 import pool
 from openstack.network.v2 import pool_member
 from openstack.network.v2 import port
 from openstack.network.v2 import quota
+from openstack.network.v2 import rbac_policy
 from openstack.network.v2 import router
 from openstack.network.v2 import security_group
 from openstack.network.v2 import security_group_rule
+from openstack.network.v2 import segment
 from openstack.network.v2 import subnet
 from openstack.network.v2 import subnet_pool
 from openstack.network.v2 import vpn_service
@@ -39,6 +44,50 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
     def setUp(self):
         super(TestNetworkProxy, self).setUp()
         self.proxy = _proxy.Proxy(self.session)
+
+    def test_address_scope_create_attrs(self):
+        self.verify_create(self.proxy.create_address_scope,
+                           address_scope.AddressScope)
+
+    def test_address_scope_delete(self):
+        self.verify_delete(self.proxy.delete_address_scope,
+                           address_scope.AddressScope,
+                           False)
+
+    def test_address_scope_delete_ignore(self):
+        self.verify_delete(self.proxy.delete_address_scope,
+                           address_scope.AddressScope,
+                           True)
+
+    def test_address_scope_find(self):
+        self.verify_find(self.proxy.find_address_scope,
+                         address_scope.AddressScope)
+
+    def test_address_scope_get(self):
+        self.verify_get(self.proxy.get_address_scope,
+                        address_scope.AddressScope)
+
+    def test_address_scopes(self):
+        self.verify_list(self.proxy.address_scopes,
+                         address_scope.AddressScope,
+                         paginated=False)
+
+    def test_address_scope_update(self):
+        self.verify_update(self.proxy.update_address_scope,
+                           address_scope.AddressScope)
+
+    def test_agent_delete(self):
+        self.verify_delete(self.proxy.delete_agent, agent.Agent, True)
+
+    def test_agent_get(self):
+        self.verify_get(self.proxy.get_agent, agent.Agent)
+
+    def test_agents(self):
+        self.verify_list(self.proxy.agents, agent.Agent,
+                         paginated=False)
+
+    def test_agent_update(self):
+        self.verify_update(self.proxy.update_agent, agent.Agent)
 
     def test_availability_zones(self):
         self.verify_list_no_kwargs(self.proxy.availability_zones,
@@ -238,6 +287,18 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
     def test_network_update(self):
         self.verify_update(self.proxy.update_network, network.Network)
 
+    def test_network_ip_availability_find(self):
+        self.verify_find(self.proxy.find_network_ip_availability,
+                         network_ip_availability.NetworkIPAvailability)
+
+    def test_network_ip_availability_get(self):
+        self.verify_get(self.proxy.get_network_ip_availability,
+                        network_ip_availability.NetworkIPAvailability)
+
+    def test_network_ip_availabilities(self):
+        self.verify_list(self.proxy.network_ip_availabilities,
+                         network_ip_availability.NetworkIPAvailability)
+
     def test_pool_member_create_attrs(self):
         self.verify_create(self.proxy.create_pool_member,
                            pool_member.PoolMember,
@@ -335,6 +396,32 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
 
     def test_quota_update(self):
         self.verify_update(self.proxy.update_quota, quota.Quota)
+
+    def test_rbac_policy_create_attrs(self):
+        self.verify_create(self.proxy.create_rbac_policy,
+                           rbac_policy.RBACPolicy)
+
+    def test_rbac_policy_delete(self):
+        self.verify_delete(self.proxy.delete_rbac_policy,
+                           rbac_policy.RBACPolicy, False)
+
+    def test_rbac_policy_delete_ignore(self):
+        self.verify_delete(self.proxy.delete_rbac_policy,
+                           rbac_policy.RBACPolicy, True)
+
+    def test_rbac_policy_find(self):
+        self.verify_find(self.proxy.find_rbac_policy, rbac_policy.RBACPolicy)
+
+    def test_rbac_policy_get(self):
+        self.verify_get(self.proxy.get_rbac_policy, rbac_policy.RBACPolicy)
+
+    def test_rbac_policies(self):
+        self.verify_list(self.proxy.rbac_policies,
+                         rbac_policy.RBACPolicy, paginated=False)
+
+    def test_rbac_policy_update(self):
+        self.verify_update(self.proxy.update_rbac_policy,
+                           rbac_policy.RBACPolicy)
 
     def test_router_create_attrs(self):
         self.verify_create(self.proxy.create_router, router.Router)
@@ -451,6 +538,15 @@ class TestNetworkProxy(test_proxy_base.TestProxyBase):
         self.verify_list(self.proxy.security_group_rules,
                          security_group_rule.SecurityGroupRule,
                          paginated=False)
+
+    def test_segment_find(self):
+        self.verify_find(self.proxy.find_segment, segment.Segment)
+
+    def test_segment_get(self):
+        self.verify_get(self.proxy.get_segment, segment.Segment)
+
+    def test_segments(self):
+        self.verify_list(self.proxy.segments, segment.Segment, paginated=False)
 
     def test_subnet_create_attrs(self):
         self.verify_create(self.proxy.create_subnet, subnet.Subnet)

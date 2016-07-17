@@ -35,7 +35,7 @@ class AlarmChange(resource.Resource):
     on_behalf_of_id = resource.prop('on_behalf_of')
     #: The project ID of the initiating identity
     project_id = resource.prop('project_id')
-    #: The time/date of the alarm change
+    #: The time/date of the alarm change.
     triggered_at = resource.prop('timestamp')
     #: The type of change
     type = resource.prop('type')

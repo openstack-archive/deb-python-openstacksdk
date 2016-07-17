@@ -22,7 +22,7 @@ EXAMPLE = {
     'event_id': IDENTIFIER,
     'on_behalf_of': '3',
     'project_id': '4',
-    'timestamp': '5',
+    'timestamp': '2015-03-09T12:15:57.233772',
     'type': '6',
     'user_id': '7',
 }

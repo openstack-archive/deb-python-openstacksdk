@@ -28,14 +28,17 @@ FAKE = {
     'profile_id': 'myserver',
     'metadata': {},
     'timeout': None,
+    'init_at': '2015-10-10T12:46:36.000000',
+    'created_at': '2015-10-10T12:46:36.000000',
+    'updated_at': '2016-10-10T12:46:36.000000',
 }
 
 FAKE_CREATE_RESP = {
     'cluster': {
         'action': 'a679c926-908f-49e7-a822-06ca371e64e1',
-        'init_at': None,
-        'created_at': None,
-        'updated_at': None,
+        'init_at': '2015-10-10T12:46:36.000000',
+        'created_at': '2015-10-10T12:46:36.000000',
+        'updated_at': '2016-10-10T12:46:36.000000',
         'data': {},
         'desired_capacity': 1,
         'domain': None,
@@ -89,6 +92,10 @@ class TestCluster(testtools.TestCase):
 
         self.assertEqual(FAKE['timeout'], sot.timeout)
         self.assertEqual(FAKE['metadata'], sot.metadata)
+
+        self.assertEqual(FAKE['init_at'], sot.init_at)
+        self.assertEqual(FAKE['created_at'], sot.created_at)
+        self.assertEqual(FAKE['updated_at'], sot.updated_at)
 
     def test_scale_in(self):
         sot = cluster.Cluster(FAKE)

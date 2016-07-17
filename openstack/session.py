@@ -21,12 +21,12 @@ import re
 from keystoneauth1 import exceptions as _exceptions
 from keystoneauth1 import session as _session
 
-import openstack
 from openstack import exceptions
+from openstack import version as openstack_version
 
 from six.moves.urllib import parse
 
-DEFAULT_USER_AGENT = "openstacksdk/%s" % openstack.__version__
+DEFAULT_USER_AGENT = "openstacksdk/%s" % openstack_version.__version__
 VERSION_PATTERN = re.compile('/v\d[\d.]*')
 
 
@@ -35,7 +35,8 @@ def parse_url(filt, url):
     path = result.path
     vstr = VERSION_PATTERN.search(path)
     if not vstr:
-        return result.scheme + "://" + result.netloc + "/" + filt.get_path()
+        return (result.scheme + "://" + result.netloc + path.rstrip('/') +
+                '/' + filt.get_path())
     start, end = vstr.span()
     prefix = path[:start]
     version = '/' + filt.get_path(path[start + 1:end])

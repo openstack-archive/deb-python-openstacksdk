@@ -29,56 +29,56 @@ class Router(resource.Resource):
     allow_list = True
 
     # Properties
-    #: The administrative state of the router, which is up ``True``
-    #: or down ``False``. *Type: bool*
-    admin_state_up = resource.prop('admin_state_up', type=bool)
     #: Availability zone hints to use when scheduling the router.
     #: *Type: list of availability zone names*
     availability_zone_hints = resource.prop('availability_zone_hints')
     #: Availability zones for the router.
     #: *Type: list of availability zone names*
     availability_zones = resource.prop('availability_zones')
+    #: The router description.
+    description = resource.prop('description')
     #: The ``network_id``, for the external gateway. *Type: dict*
     external_gateway_info = resource.prop('external_gateway_info', type=dict)
+    #: The administrative state of the router, which is up ``True``
+    #: or down ``False``. *Type: bool*
+    is_admin_state_up = resource.prop('admin_state_up', type=bool)
+    #: The distributed state of the router, which is distributed ``True``
+    #: or not ``False``. *Type: bool* *Default: False*
+    is_distributed = resource.prop('distributed', type=bool, default=False)
+    #: The highly-available state of the router, which is highly available
+    #: ``True`` or not ``False``. *Type: bool* *Default: False*
+    is_ha = resource.prop('ha', type=bool, default=False)
     #: The router name.
     name = resource.prop('name')
     #: The ID of the project this router is associated with.
     project_id = resource.prop('tenant_id')
+    #: The extra routes configuration for the router.
+    routes = resource.prop('routes', type=list)
     #: The router status.
     status = resource.prop('status')
-    #: The highly-available state of the router, which is highly available
-    #: ``True`` or not ``False``. *Type: bool* *Default: False*
-    is_ha = resource.prop('ha', type=bool, default=False)
-    #: The distributed state of the router, which is distributed ``True``
-    #: or not ``False``. *Type: bool* *Default: False*
-    is_distributed = resource.prop('distributed', type=bool, default=False)
-    # The extra routes configuration for the router.
-    routes = resource.prop('routes', type=list)
 
-    def add_interface(self, session, subnet_id):
+    def add_interface(self, session, **body):
         """Add an internal interface to a logical router.
 
         :param session: The session to communicate through.
         :type session: :class:`~openstack.session.Session`
-        :param str subnet_id: The ID of a subnet to add.
+        :param dict body : The body requested to be updated on the outer
 
         :returns: The body of the response as a dictionary.
         """
-        body = {'subnet_id': subnet_id}
         url = utils.urljoin(self.base_path, self.id, 'add_router_interface')
         resp = session.put(url, endpoint_filter=self.service, json=body)
         return resp.json()
 
-    def remove_interface(self, session, subnet_id):
+    def remove_interface(self, session, **body):
         """Remove an internal interface from a logical router.
 
         :param session: The session to communicate through.
         :type session: :class:`~openstack.session.Session`
-        :param str subnet_id: The ID of a subnet to remove.
+        :param dict body : The body requested to be updated on the outer
 
         :returns: The body of the response as a dictionary.
         """
-        body = {'subnet_id': subnet_id}
         url = utils.urljoin(self.base_path, self.id, 'remove_router_interface')
         resp = session.put(url, endpoint_filter=self.service, json=body)
         return resp.json()

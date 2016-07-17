@@ -17,7 +17,7 @@ from openstack.identity.v3 import trust
 IDENTIFIER = 'IDENTIFIER'
 EXAMPLE = {
     'project_id': '1',
-    'expires_at': '2020-01-01T18:30:59.999999Z',
+    'expires_at': '2016-03-09T12:14:57.233772',
     'id': IDENTIFIER,
     'impersonation': True,
     'trustee_user_id': '2',
@@ -46,7 +46,7 @@ class TestTrust(testtools.TestCase):
                          sot.project_id)
         self.assertEqual(EXAMPLE['expires_at'], sot.expires_at)
         self.assertEqual(EXAMPLE['id'], sot.id)
-        self.assertEqual(EXAMPLE['impersonation'], sot.impersonation)
+        self.assertTrue(sot.is_impersonation)
         self.assertEqual(EXAMPLE['trustee_user_id'], sot.trustee_user_id)
         self.assertEqual(EXAMPLE['trustor_user_id'], sot.trustor_user_id)
         self.assertEqual(EXAMPLE['roles'], sot.roles)

@@ -19,12 +19,13 @@ FAKE_ID = "ffa9bc5e-1172-4021-acaf-cdcd78a9584d"
 SNAPSHOT = {
     "status": "creating",
     "description": "Daily backup",
-    "created_at": "2013-02-25T03:56:53.081642",
+    "created_at": "2015-03-09T12:14:57.233772",
     "metadata": {},
     "volume_id": "5aa119a8-d25b-45a7-8d1b-88e127885635",
     "size": 1,
     "id": FAKE_ID,
-    "name": "snap-001"
+    "name": "snap-001",
+    "force": "true",
 }
 
 DETAILS = {
@@ -61,6 +62,7 @@ class TestSnapshot(testtools.TestCase):
         self.assertEqual(SNAPSHOT["volume_id"], sot.volume_id)
         self.assertEqual(SNAPSHOT["size"], sot.size)
         self.assertEqual(SNAPSHOT["name"], sot.name)
+        self.assertTrue(sot.is_forced)
 
 
 class TestSnapshotDetail(testtools.TestCase):

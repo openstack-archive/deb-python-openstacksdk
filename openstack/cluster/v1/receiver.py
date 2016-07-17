@@ -10,7 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
 from openstack.cluster import cluster_service
 from openstack import resource
 

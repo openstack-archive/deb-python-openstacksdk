@@ -20,7 +20,7 @@ EXAMPLE = {
     'id': IDENTIFIER,
     'checksum': '1',
     'container_format': '2',
-    'created_at': '2014-11-19T10:44:55.123450Z',
+    'created_at': '2015-03-09T12:14:57.233772',
     'data': 'This is not an image',
     'disk_format': '4',
     'min_disk': 5,
@@ -30,7 +30,7 @@ EXAMPLE = {
     'protected': False,
     'status': '8',
     'tags': ['g', 'h', 'i'],
-    'updated_at': '2014-11-19T10:44:55.123450Z',
+    'updated_at': '2015-03-09T12:15:57.233772',
     'virtual_size': '10',
     'visibility': '11'
 }
@@ -60,7 +60,7 @@ class TestImage(testtools.TestCase):
         self.assertEqual(EXAMPLE['name'], sot.name)
         self.assertEqual(EXAMPLE['owner'], sot.owner_id)
         self.assertEqual(EXAMPLE['properties'], sot.properties)
-        self.assertEqual(EXAMPLE['protected'], sot.protected)
+        self.assertFalse(sot.is_protected)
         self.assertEqual(EXAMPLE['status'], sot.status)
         self.assertEqual(EXAMPLE['tags'], sot.tags)
         self.assertEqual(EXAMPLE['updated_at'], sot.updated_at)

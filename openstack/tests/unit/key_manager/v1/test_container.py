@@ -17,12 +17,12 @@ from openstack.key_manager.v1 import container
 IDENTIFIER = 'http://localhost/containers/IDENTIFIER'
 EXAMPLE = {
     'container_ref': IDENTIFIER,
-    'created': '2',
+    'created': '2015-03-09T12:14:57.233772',
     'name': '3',
     'secret_refs': '4',
     'status': '5',
     'type': '6',
-    'updated': '7',
+    'updated': '2015-03-09T12:15:57.233772',
 }
 
 

@@ -32,7 +32,7 @@ FAKE = {
     'resource_type': 'OS::Heat::FakeResource',
     'status': 'CREATE_COMPLETE',
     'status_reason': 'state changed',
-    'updated_time': '2015-05-05T07:26:00Z',
+    'updated_time': '2015-03-09T12:15:57.233772',
 }
 
 

@@ -37,4 +37,4 @@ class Extension(resource.Resource):
     #: A URL pointing to the namespace for this extension.
     namespace = resource.prop('namespace')
     #: Timestamp when the extension was last updated.
-    updated = resource.prop('updated')
+    updated_at = resource.prop('updated')

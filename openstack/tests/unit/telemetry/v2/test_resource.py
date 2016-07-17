@@ -19,8 +19,8 @@ LINKS = [{'href': 'first_uri', 'rel': 'label 1', },
          {'href': 'other_uri', 'rel': 'label', }, ]
 EXAMPLE = {
     'resource_id': IDENTIFIER,
-    'first_sample_timestamp': '1',
-    'last_sample_timestamp': '2',
+    'first_sample_timestamp': '2015-03-09T12:15:57.233772',
+    'last_sample_timestamp': '2015-03-09T12:15:57.233772',
     'links': LINKS,
     'metadata': {'name_one': '1', 'name_two': '2', },
     'project_id': '123',

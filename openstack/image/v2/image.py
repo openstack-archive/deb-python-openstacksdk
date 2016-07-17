@@ -49,6 +49,9 @@ class Image(resource.Resource):
     #: disk image. Virtual appliance vendors have different formats
     #: for laying out the information contained in a VM disk image.
     disk_format = resource.prop('disk_format')
+    #: Defines whether the image can be deleted.
+    #: *Type: bool*
+    is_protected = resource.prop('protected', type=bool)
     #: The minimum disk size in GB that is required to boot the image.
     min_disk = resource.prop('min_disk')
     #: The name of the image.
@@ -57,8 +60,6 @@ class Image(resource.Resource):
     owner_id = resource.prop('owner')
     #: Properties, if any, that are associated with the image.
     properties = resource.prop('properties')
-    #: Defines whether the image can be deleted.
-    protected = resource.prop('protected', type=bool)
     #: The size of the image data, in bytes.
     size = resource.prop('size', type=int)
     #: When present, Glance will attempt to store the disk image data in the

@@ -10,9 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from datetime import datetime
-import iso8601
-
 import mock
 import testtools
 
@@ -44,6 +41,7 @@ OBJ_EXAMPLE = {
 DICT_EXAMPLE = {
     'container': CONTAINER_NAME,
     'name': OBJECT_NAME,
+    'content_type': 'application/octet-stream',
     'headers': {
         'content-length': '252466',
         'accept-ranges': 'bytes',
@@ -51,7 +49,6 @@ DICT_EXAMPLE = {
         'etag': '243f87b91224d85722564a80fd3cb1f1',
         'x-timestamp': '1453414256.28112',
         'date': 'Thu, 28 Aug 2014 14:41:59 GMT',
-        'content-type': 'application/octet-stream',
         'id': 'tx5fb5ad4f4d0846c6b2bc7-0053ff3fb7',
         'x-delete-at': '1453416226.16744'
     }
@@ -96,19 +93,15 @@ class TestObject(testtools.TestCase):
         headers = DICT_EXAMPLE['headers']
         self.assertEqual(headers['content-length'], sot.content_length)
         self.assertEqual(headers['accept-ranges'], sot.accept_ranges)
-        self.assertEqual(headers['last-modified'], sot.last_modified)
+        self.assertEqual(headers['last-modified'], sot.last_modified_at)
         self.assertEqual(headers['etag'], sot.etag)
-        self.assertEqual(datetime(2016, 1, 21, 22, 10, 56, 281120,
-                                  tzinfo=iso8601.UTC),
-                         sot.timestamp)
+        self.assertEqual(headers['x-timestamp'], sot.timestamp)
         self.assertEqual(headers['content-type'], sot.content_type)
-        self.assertEqual(datetime(2016, 1, 21, 22, 43, 46, 167440,
-                                  tzinfo=iso8601.UTC),
-                         sot.delete_at)
+        self.assertEqual(headers['x-delete-at'], sot.delete_at)
 
     def test_get(self):
         sot = obj.Object.new(container=CONTAINER_NAME, name=OBJECT_NAME)
-        sot.newest = True
+        sot.is_newest = True
         sot.if_match = {"who": "what"}
 
         rv = sot.get(self.sess)
@@ -127,7 +120,7 @@ class TestObject(testtools.TestCase):
     def _test_create(self, method, data, accept):
         sot = obj.Object.new(container=CONTAINER_NAME, name=OBJECT_NAME,
                              data=data)
-        sot.newest = True
+        sot.is_newest = True
         headers = {"x-newest": True, "Accept": ""}
 
         rv = sot.create(self.sess)

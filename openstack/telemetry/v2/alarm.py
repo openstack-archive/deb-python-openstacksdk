@@ -37,23 +37,24 @@ class Alarm(resource.Resource):
     combination_rule = resource.prop('combination_rule')
     #: The description of the alarm
     description = resource.prop('description')
-    #: ``True`` if this alarm is enabled
-    enabled = resource.prop('enabled', type=bool)
+    #: ``True`` if this alarm is enabled. *Type: bool*
+    is_enabled = resource.prop('enabled', type=bool)
     #: The actions to do when alarm state changes to insufficient data
     insufficient_data_actions = resource.prop('insufficient_data_actions')
+    #: The actions should be re-triggered on each evaluation cycle.
+    #: *Type: bool*
+    is_repeat_actions = resource.prop('repeat_actions', type=bool)
     #: The name for the alarm
     name = resource.prop('name')
     #: The actions to do when alarm state change to ok
     ok_actions = resource.prop('ok_actions')
     #: The ID of the project that owns the alarm
     project_id = resource.prop('project_id')
-    #: The actions should be re-triggered on each evaluation cycle
-    repeat_actions = resource.prop('repeat_actions', type=bool)
     #: The severity of the alarm
     severity = resource.prop('severity')
     #: The state off the alarm
     state = resource.prop('state')
-    #: The timestamp of the last alarm state change
+    #: The timestamp of the last alarm state change.
     state_changed_at = resource.prop('state_timestamp')
     # TODO(briancurtin): undocumented
     threshold_rule = resource.prop('threshold_rule', type=dict)
@@ -61,7 +62,7 @@ class Alarm(resource.Resource):
     time_constraints = resource.prop('time_constraints')
     #: Explicit type specifier to select which rule to follow
     type = resource.prop('type')
-    #: The timestamp of the last alarm definition update
+    #: The timestamp of the last alarm definition update.
     updated_at = resource.prop('timestamp')
     #: The ID of the user who created the alarm
     user_id = resource.prop('user_id')

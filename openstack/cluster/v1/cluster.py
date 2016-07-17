@@ -43,10 +43,13 @@ class Cluster(resource.Resource):
     #: The ID of the parent cluster (if any).
     parent_id = resource.prop('parent')
     #: Timestamp of when the cluster was initialized.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
     init_at = resource.prop('init_at')
     #: Timestamp of when the cluster was created.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
     created_at = resource.prop('created_at')
     #: Timestamp of when the cluster was last updated.
+    #: *Type: datetime object parsed from ISO 8601 formatted string*
     updated_at = resource.prop('updated_at')
     #: Lower bound (inclusive) for the size of the cluster.
     min_size = resource.prop('min_size', type=int)

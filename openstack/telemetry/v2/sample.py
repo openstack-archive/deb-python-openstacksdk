@@ -9,6 +9,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
 from openstack import resource
 from openstack.telemetry import telemetry_service
 
@@ -24,20 +25,20 @@ class Sample(resource.Resource):
     allow_list = True
 
     # Properties
-    #: Arbitrary metadata associated with the sample
-    metadata = resource.prop('metadata', alias='resource_metadata')
     #: The meter name this sample is for
     counter_name = resource.prop('meter', alias='counter_name')
+    #: When the sample has been generated.
+    generated_at = resource.prop('timestamp')
+    #: Arbitrary metadata associated with the sample
+    metadata = resource.prop('metadata', alias='resource_metadata')
     #: The ID of the project this sample was taken for
     project_id = resource.prop('project_id')
-    #: When the sample has been recorded
+    #: When the sample has been recorded.
     recorded_at = resource.prop('recorded_at')
     #: The ID of the resource this sample was taken for
     resource_id = resource.prop('resource_id')
     #: The name of the source that identifies where the sample comes from
     source = resource.prop('source')
-    #: When the sample has been generated
-    generated_at = resource.prop('timestamp')
     #: The meter type
     type = resource.prop('type', alias='counter_type')
     #: The unit of measure

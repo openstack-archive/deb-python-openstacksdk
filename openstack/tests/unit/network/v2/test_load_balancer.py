@@ -28,6 +28,7 @@ EXAMPLE = {
     'vip_subnet_id': '10',
     'vip_port_id': '11',
     'provider': '12',
+    'pools': [{'id', '13'}],
 }
 
 
@@ -47,7 +48,7 @@ class TestLoadBalancer(testtools.TestCase):
 
     def test_make_it(self):
         sot = load_balancer.LoadBalancer(EXAMPLE)
-        self.assertEqual(EXAMPLE['admin_state_up'], sot.admin_state_up)
+        self.assertTrue(sot.is_admin_state_up)
         self.assertEqual(EXAMPLE['description'], sot.description)
         self.assertEqual(EXAMPLE['id'], sot.id)
         self.assertEqual(EXAMPLE['listeners'], sot.listener_ids)
@@ -60,3 +61,4 @@ class TestLoadBalancer(testtools.TestCase):
         self.assertEqual(EXAMPLE['vip_subnet_id'], sot.vip_subnet_id)
         self.assertEqual(EXAMPLE['vip_port_id'], sot.vip_port_id)
         self.assertEqual(EXAMPLE['provider'], sot.provider)
+        self.assertEqual(EXAMPLE['pools'], sot.pool_ids)

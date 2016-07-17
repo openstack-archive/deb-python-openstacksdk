@@ -23,8 +23,8 @@ FAKE = {
     'type': 'webhook',
     'cluster_id': 'FAKE_CLUSTER',
     'action': 'CLUSTER_RESIZE',
-    'created_at': '2015-08-10T09:14:53',
-    'updated_at': None,
+    'created_at': '2015-10-10T12:46:36.000000',
+    'updated_at': '2016-10-10T12:46:36.000000',
     'actor': {},
     'params': {
         'adjustment_type': 'CHANGE_IN_CAPACITY',

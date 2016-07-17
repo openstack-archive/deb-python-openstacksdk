@@ -41,8 +41,7 @@ class Extension(resource.Resource):
     #: *Type: string*
     namespace = resource.prop('namespace')
     #: The last time the extension has been modified (update date).
-    #: *Type: date*
-    updated = resource.prop('updated')
+    updated_at = resource.prop('updated')
 
     @classmethod
     def list(cls, session, **params):

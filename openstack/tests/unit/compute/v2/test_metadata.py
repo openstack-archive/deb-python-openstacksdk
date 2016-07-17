@@ -32,12 +32,12 @@ class TestMetadata(testtools.TestCase):
         self.meta_result = {"meta": {"oh": "yeah"}}
 
     def test_get_all_metadata_Server(self):
-        self._test_get_all_metadata(server.Server({"id": IDENTIFIER}))
+        self._test_get_all_metadata(server.Server(id=IDENTIFIER))
 
     def test_get_all_metadata_ServerDetail(self):
         # This is tested explicitly so we know ServerDetail items are
         # properly having /detail stripped out of their base_path.
-        self._test_get_all_metadata(server.ServerDetail({"id": IDENTIFIER}))
+        self._test_get_all_metadata(server.ServerDetail(id=IDENTIFIER))
 
     def _test_get_all_metadata(self, sot):
         response = mock.Mock()
@@ -52,124 +52,34 @@ class TestMetadata(testtools.TestCase):
                                          headers={},
                                          endpoint_filter=sot.service)
 
-    def test_get_one_metadata(self):
-        response = mock.Mock()
-        response.json.return_value = self.meta_result
-        sess = mock.Mock()
-        sess.get.return_value = response
-
-        sot = server.Server({"id": IDENTIFIER})
-
-        key = "lol"
-        result = sot.get_metadata(sess, key)
-
-        self.assertEqual(result, self.meta_result["meta"])
-        sess.get.assert_called_once_with("servers/IDENTIFIER/metadata/" + key,
-                                         headers={},
-                                         endpoint_filter=sot.service)
-
-    def test_create_metadata_bad_type(self):
-        sess = mock.Mock()
-        sess.put = mock.Mock()
-
-        sot = server.Server({"id": IDENTIFIER})
-        self.assertRaises(ValueError,
-                          sot.create_metadata, sess, some_key=True)
-
-    def test_create_metadata(self):
-        metadata = {"first": "1", "second": "2"}
-        responses = []
-        for key, value in metadata.items():
-            response = mock.Mock()
-            response.json.return_value = {"meta": {key: value}}
-            responses.append(response)
-
-        sess = mock.Mock()
-        sess.put.side_effect = responses
-
-        sot = server.Server({"id": IDENTIFIER})
-
-        result = sot.create_metadata(sess, **metadata)
-
-        self.assertEqual(result, dict([(k, v) for k, v in metadata.items()]))
-
-        # assert_called_with depends on sequence, which doesn't work nicely
-        # with all of the dictionaries we're working with here. Build up
-        # our own list of calls and check that they've happend
-        calls = []
-        for key in metadata.keys():
-            calls.append(mock.call("servers/IDENTIFIER/metadata/" + key,
-                                   endpoint_filter=sot.service,
-                                   headers={},
-                                   json={"meta": {key: metadata[key]}}))
-
-        sess.put.assert_has_calls(calls, any_order=True)
-
-    def test_replace_metadata(self):
-        response = mock.Mock()
-        response.json.return_value = self.metadata_result
-        sess = mock.Mock()
-        sess.put.return_value = response
-
-        sot = server.Server({"id": IDENTIFIER})
-
-        new_meta = {"lol": "rofl"}
-
-        result = sot.replace_metadata(sess, **new_meta)
-
-        self.assertEqual(result, self.metadata_result["metadata"])
-        sess.put.assert_called_once_with("servers/IDENTIFIER/metadata",
-                                         endpoint_filter=sot.service,
-                                         headers={},
-                                         json={"metadata": new_meta})
-
-    def test_replace_metadata_clear(self):
-        empty = {}
-
-        response = mock.Mock()
-        response.json.return_value = {"metadata": empty}
-        sess = mock.Mock()
-        sess.put.return_value = response
-
-        sot = server.Server({"id": IDENTIFIER})
-
-        result = sot.replace_metadata(sess)
-
-        self.assertEqual(result, empty)
-        sess.put.assert_called_once_with("servers/IDENTIFIER/metadata",
-                                         endpoint_filter=sot.service,
-                                         headers={},
-                                         json={"metadata": empty})
-
-    def test_update_metadata(self):
+    def test_set_metadata(self):
         response = mock.Mock()
         response.json.return_value = self.metadata_result
         sess = mock.Mock()
         sess.post.return_value = response
 
-        sot = server.Server({"id": IDENTIFIER})
+        sot = server.Server(id=IDENTIFIER)
 
-        updated_meta = {"lol": "rofl"}
+        set_meta = {"lol": "rofl"}
 
-        result = sot.update_metadata(sess, **updated_meta)
+        result = sot.set_metadata(sess, **set_meta)
 
         self.assertEqual(result, self.metadata_result["metadata"])
         sess.post.assert_called_once_with("servers/IDENTIFIER/metadata",
                                           endpoint_filter=sot.service,
                                           headers={},
-                                          json={"metadata": updated_meta})
+                                          json={"metadata": set_meta})
 
     def test_delete_metadata(self):
         sess = mock.Mock()
         sess.delete.return_value = None
 
-        sot = server.Server({"id": IDENTIFIER})
+        sot = server.Server(id=IDENTIFIER)
 
         key = "hey"
 
-        result = sot.delete_metadata(sess, key)
+        sot.delete_metadata(sess, [key])
 
-        self.assertIsNone(result)
         sess.delete.assert_called_once_with(
             "servers/IDENTIFIER/metadata/" + key,
             headers={"Accept": ""},
