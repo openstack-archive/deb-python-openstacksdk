@@ -1,8 +1,12 @@
-python-openstacksdk (0.9.0-2) UNRELEASED; urgency=medium
+python-openstacksdk (0.9.5-1) UNRELEASED; urgency=medium
 
+  [ Thomas Goirand ]
   * Using pkgos-dh_auto_{test,install} from openstack-pkg-tools >= 52~.
 
- -- Thomas Goirand <zigo@debian.org>  Sun, 17 Jul 2016 13:48:59 +0000
+  [ Corey Bryant ]
+  * New upstream release.
+
+ -- Corey Bryant <corey.bryant@canonical.com>  Fri, 02 Sep 2016 12:10:18 -0400
 
 python-openstacksdk (0.9.0-1) experimental; urgency=medium
 
