@@ -72,7 +72,8 @@ class ServiceFilter(dict):
     valid_versions = []
 
     def __init__(self, service_type, interface=PUBLIC, region=None,
-                 service_name=None, version=None):
+                 service_name=None, version=None, api_version=None,
+                 requires_project_id=False):
         """Create a service identifier.
 
         :param string service_type: The desired type of service.
@@ -81,12 +82,17 @@ class ServiceFilter(dict):
         :param string region: The desired region (optional).
         :param string service_name: Name of the service
         :param string version: Version of service to use.
+        :param string api_version: Microversion of service supported.
+        :param bool requires_project_id: True if this service's endpoint
+                                         expects project id to be included.
         """
         self['service_type'] = service_type.lower()
         self['interface'] = interface
         self['region_name'] = region
         self['service_name'] = service_name
         self['version'] = version
+        self['api_version'] = api_version
+        self['requires_project_id'] = requires_project_id
 
     @property
     def service_type(self):
@@ -123,6 +129,22 @@ class ServiceFilter(dict):
     @version.setter
     def version(self, value):
         self['version'] = value
+
+    @property
+    def api_version(self):
+        return self['api_version']
+
+    @api_version.setter
+    def api_version(self, value):
+        self['api_version'] = value
+
+    @property
+    def requires_project_id(self):
+        return self['requires_project_id']
+
+    @requires_project_id.setter
+    def requires_project_id(self, value):
+        self['requires_project_id'] = value
 
     @property
     def path(self):
@@ -166,4 +188,4 @@ class ServiceFilter(dict):
         object store where the service type is `object-store` and the module
         is `object_store`.
         """
-        return self.__class__.__module__.split('.')[1]
+        return self.__class__.__module__.split('.')[-2]

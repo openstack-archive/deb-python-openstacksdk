@@ -22,6 +22,7 @@ from openstack.compute.v2 import server
 from openstack.compute.v2 import server_group
 from openstack.compute.v2 import server_interface
 from openstack.compute.v2 import server_ip
+from openstack.compute.v2 import service
 from openstack.tests.unit import test_proxy_base2
 
 
@@ -63,9 +64,6 @@ class TestComputeProxy(test_proxy_base2.TestProxyBase):
                          paginated=True,
                          method_kwargs={"details": False, "query": 1},
                          expected_kwargs={"query": 1})
-
-    def test_flavor_update(self):
-        self.verify_update(self.proxy.update_flavor, flavor.Flavor)
 
     def test_image_delete(self):
         self.verify_delete(self.proxy.delete_image, image.Image, False)
@@ -210,6 +208,11 @@ class TestComputeProxy(test_proxy_base2.TestProxyBase):
     def test_server_delete_ignore(self):
         self.verify_delete(self.proxy.delete_server, server.Server, True)
 
+    def test_server_force_delete(self):
+        self._verify("openstack.compute.v2.server.Server.force_delete",
+                     self.proxy.delete_server,
+                     method_args=["value", False, True])
+
     def test_server_find(self):
         self.verify_find(self.proxy.find_server, server.Server)
 
@@ -352,3 +355,30 @@ class TestComputeProxy(test_proxy_base2.TestProxyBase):
     def test_get_hypervisor(self):
         self.verify_get(self.proxy.get_hypervisor,
                         hypervisor.Hypervisor)
+
+    def test_get_service(self):
+        self.verify_get(self.proxy.get_service,
+                        service.Service)
+
+    def test_services(self):
+        self.verify_list_no_kwargs(self.proxy.services,
+                                   service.Service,
+                                   paginated=False)
+
+    def test_enable_service(self):
+        self._verify('openstack.compute.v2.service.Service.enable',
+                     self.proxy.enable_service,
+                     method_args=["value", "host1", "nova-compute"],
+                     expected_args=["host1", "nova-compute"])
+
+    def test_disable_service(self):
+        self._verify('openstack.compute.v2.service.Service.disable',
+                     self.proxy.disable_service,
+                     method_args=["value", "host1", "nova-compute"],
+                     expected_args=["host1", "nova-compute", None])
+
+    def test_force_service_down(self):
+        self._verify('openstack.compute.v2.service.Service.force_down',
+                     self.proxy.force_service_down,
+                     method_args=["value", "host1", "nova-compute"],
+                     expected_args=["host1", "nova-compute"])

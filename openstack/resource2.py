@@ -183,21 +183,22 @@ class QueryParameters(object):
     def __init__(self, *names, **mappings):
         """Create a dict of accepted query parameters
 
-        names are strings where the client-side name matches
-        what the server expects, e.g., server=server.
+        :param names: List of strings containing client-side query parameter
+                      names. Each name in the list maps directly to the name
+                      expected by the server.
 
-        mappings are key-value pairs where the key is the
-        client-side name we'll accept here and the value is
-        the name the server expects, e.g, changes_since=changes-since
+        :param mappings: Key-value pairs where the key is the client-side
+                         name we'll accept here and the value is the name
+                         the server expects, e.g, changes_since=changes-since
         """
         self._mapping = dict({name: name for name in names}, **mappings)
 
     def _transpose(self, query):
         """Transpose the keys in query based on the mapping
 
-        This method converts the keys in `query` from their
-        client-side names to have the appropriate keys as
-        expected by the server for query parameters.
+        :param dict query: Collection of key-value pairs where each key is the
+                           client-side parameter name to be transposed to its
+                           server side name.
         """
         result = {}
         for key, value in self._mapping.items():
@@ -218,7 +219,7 @@ class Resource(object):
     #: The name of this resource.
     name = Body("name")
     #: The location of this resource.
-    location = Header("location")
+    location = Header("Location")
 
     #: Mapping of accepted query parameter names.
     _query_mapping = QueryParameters()
@@ -386,10 +387,10 @@ class Resource(object):
         Returns an empty string if no name exists, as this method is
         consumed by _get_id and passed to getattr.
         """
-        for key, value in cls.__dict__.items():
+        for value in cls.__dict__.values():
             if isinstance(value, Body):
                 if value.alternate_id:
-                    return key
+                    return value.name
         return ""
 
     @staticmethod
@@ -432,6 +433,53 @@ class Resource(object):
         """
         return cls(synchronized=True, **kwargs)
 
+    def to_dict(self, body=True, headers=True, ignore_none=False):
+        """Return a dictionary of this resource's contents
+
+        :param bool body: Include the :class:`~openstack.resource2.Body`
+                          attributes in the returned dictionary.
+        :param bool headers: Include the :class:`~openstack.resource2.Header`
+                             attributes in the returned dictionary.
+        :param bool ignore_none: When True, exclude key/value pairs where
+                                 the value is None. This will exclude
+                                 attributes that the server hasn't returned.
+
+        :return: A dictionary of key/value pairs where keys are named
+                 as they exist as attributes of this class.
+        """
+        mapping = {}
+
+        components = []
+        if body:
+            components.append(Body)
+        if headers:
+            components.append(Header)
+        if not components:
+            raise ValueError(
+                "At least one of `body` or `headers` must be True")
+
+        # isinstance stricly requires this to be a tuple
+        components = tuple(components)
+
+        # NOTE: This is similar to the implementation in _get_mapping
+        # but is slightly different in that we're looking at an instance
+        # and we're mapping names on this class to their actual stored
+        # values.
+        # Since we're looking at class definitions we need to include
+        # subclasses, so check the whole MRO.
+        for klass in self.__class__.__mro__:
+            for key, value in klass.__dict__.items():
+                if isinstance(value, components):
+                    # Make sure base classes don't end up overwriting
+                    # mappings we've found previously in subclasses.
+                    if key not in mapping:
+                        value = getattr(self, key, None)
+                        if ignore_none and value is None:
+                            continue
+                        mapping[key] = value
+
+        return mapping
+
     def _prepare_request(self, requires_id=True, prepend_key=False):
         """Prepare a request to be sent to the server
 
@@ -463,18 +511,13 @@ class Resource(object):
 
         return _Request(uri, body, headers)
 
-    def _transpose_component(self, component, mapping):
-        """Transpose the keys in component based on a mapping
+    def _filter_component(self, component, mapping):
+        """Filter the keys in component based on a mapping
 
-        This method converts a dict of server-side data to have
-        the appropriate keys for attributes on this instance.
+        This method converts a dict of server-side data to contain
+        only the appropriate keys for attributes on this instance.
         """
-        result = {}
-        for key, value in mapping.items():
-            if value in component:
-                result[key] = component[value]
-
-        return result
+        return {k: v for k, v in component.items() if k in mapping.values()}
 
     def _translate_response(self, response, has_body=True):
         """Given a KSA response, inflate this instance with its data
@@ -490,20 +533,23 @@ class Resource(object):
             if self.resource_key and self.resource_key in body:
                 body = body[self.resource_key]
 
-            body = self._transpose_component(body, self._body_mapping())
+            body = self._filter_component(body, self._body_mapping())
             self._body.attributes.update(body)
             self._body.clean()
 
-        headers = self._transpose_component(response.headers,
-                                            self._header_mapping())
+        headers = self._filter_component(response.headers,
+                                         self._header_mapping())
         self._header.attributes.update(headers)
         self._header.clean()
 
-    def create(self, session):
+    def create(self, session, prepend_key=True):
         """Create a remote resource based on this instance.
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
+        :param prepend_key: A boolean indicating whether the resource_key
+                            should be prepended in a resource creation
+                            request. Default to True.
 
         :return: This :class:`Resource` instance.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
@@ -514,24 +560,25 @@ class Resource(object):
 
         if self.put_create:
             request = self._prepare_request(requires_id=True,
-                                            prepend_key=True)
+                                            prepend_key=prepend_key)
             response = session.put(request.uri, endpoint_filter=self.service,
                                    json=request.body, headers=request.headers)
         else:
             request = self._prepare_request(requires_id=False,
-                                            prepend_key=True)
+                                            prepend_key=prepend_key)
             response = session.post(request.uri, endpoint_filter=self.service,
                                     json=request.body, headers=request.headers)
 
         self._translate_response(response)
         return self
 
-    def get(self, session):
+    def get(self, session, requires_id=True):
         """Get a remote resource based on this instance.
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
-
+        :param boolean requires_id: A boolean indicating whether resource ID
+                                    should be part of the requested URI.
         :return: This :class:`Resource` instance.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
                  :data:`Resource.allow_get` is not set to ``True``.
@@ -539,8 +586,7 @@ class Resource(object):
         if not self.allow_get:
             raise exceptions.MethodNotSupported(self, "get")
 
-        request = self._prepare_request()
-
+        request = self._prepare_request(requires_id=requires_id)
         response = session.get(request.uri, endpoint_filter=self.service)
 
         self._translate_response(response)
@@ -567,11 +613,14 @@ class Resource(object):
         self._translate_response(response)
         return self
 
-    def update(self, session):
+    def update(self, session, prepend_key=True, has_body=True):
         """Update the remote resource based on this instance.
 
         :param session: The session to use for making this request.
         :type session: :class:`~openstack.session.Session`
+        :param prepend_key: A boolean indicating whether the resource_key
+                            should be prepended in a resource update request.
+                            Default to True.
 
         :return: This :class:`Resource` instance.
         :raises: :exc:`~openstack.exceptions.MethodNotSupported` if
@@ -584,7 +633,7 @@ class Resource(object):
         if not self.allow_update:
             raise exceptions.MethodNotSupported(self, "update")
 
-        request = self._prepare_request(prepend_key=True)
+        request = self._prepare_request(prepend_key=prepend_key)
 
         if self.patch_update:
             response = session.patch(request.uri, endpoint_filter=self.service,
@@ -594,7 +643,7 @@ class Resource(object):
             response = session.put(request.uri, endpoint_filter=self.service,
                                    json=request.body, headers=request.headers)
 
-        self._translate_response(response)
+        self._translate_response(response, has_body=has_body)
         return self
 
     def delete(self, session):
@@ -671,6 +720,13 @@ class Resource(object):
             yielded = 0
             new_marker = None
             for data in resp:
+                # Do not allow keys called "self" through. Glance chose
+                # to name a key "self", so we need to pop it out because
+                # we can't send it through cls.existing and into the
+                # Resource initializer. "self" is already the first
+                # argument and is practically a reserved word.
+                data.pop("self", None)
+
                 value = cls.existing(**data)
                 new_marker = value.id
                 yielded += 1

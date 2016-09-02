@@ -50,11 +50,15 @@ class Server(resource2.Resource, metadata.MetadataMixin):
     #: The flavor reference, as a ID or full URL, for the flavor to use for
     #: this server.
     flavor_id = resource2.Body('flavorRef')
+    #: The flavor property as returned from server.
+    flavor = resource2.Body('flavor', type=dict)
     #: An ID representing the host of this server.
     host_id = resource2.Body('hostId')
     #: The image reference, as a ID or full URL, for the image to use for
     #: this server.
     image_id = resource2.Body('imageRef')
+    #: The image property as returned from server.
+    image = resource2.Body('image', type=dict)
     #: Metadata stored for this server. *Type: dict*
     metadata = resource2.Body('metadata', type=dict)
     #: While the server is building, this value represents the percentage
@@ -134,6 +138,11 @@ class Server(resource2.Resource, metadata.MetadataMixin):
     def reboot(self, session, reboot_type):
         """Reboot server where reboot_type might be 'SOFT' or 'HARD'."""
         body = {'reboot': {'type': reboot_type}}
+        self._action(session, body)
+
+    def force_delete(self, session):
+        """Force delete a server."""
+        body = {'forceDelete': None}
         self._action(session, body)
 
     def rebuild(self, session, name, admin_password,

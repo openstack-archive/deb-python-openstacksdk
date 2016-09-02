@@ -382,7 +382,7 @@ class TestResource(base.TestCase):
 
     def test_initialize_basic(self):
         body = {"body": 1}
-        header = {"header": 2}
+        header = {"header": 2, "Location": "somewhere"}
         uri = {"uri": 3}
         everything = dict(itertools.chain(body.items(), header.items(),
                                           uri.items()))
@@ -394,6 +394,7 @@ class TestResource(base.TestCase):
                                "_collect_attrs", mock_collect):
             sot = resource2.Resource(synchronized=False, **everything)
             mock_collect.assert_called_once_with(everything)
+        self.assertEqual("somewhere", sot.location)
 
         self.assertIsInstance(sot._body, resource2._ComponentManager)
         self.assertEqual(body, sot._body.dirty)
@@ -573,14 +574,19 @@ class TestResource(base.TestCase):
 
     def test__alternate_id(self):
         class Test(resource2.Resource):
-            alt = resource2.Body("alt", alternate_id=True)
+            alt = resource2.Body("the_alt", alternate_id=True)
 
-        self.assertTrue("alt", Test._alternate_id())
+        self.assertTrue("the_alt", Test._alternate_id())
 
-        value = "lol"
-        sot = Test(alt=value)
-        self.assertEqual(sot.alt, value)
-        self.assertEqual(sot.id, value)
+        value1 = "lol"
+        sot = Test(alt=value1)
+        self.assertEqual(sot.alt, value1)
+        self.assertEqual(sot.id, value1)
+
+        value2 = "rofl"
+        sot = Test(the_alt=value2)
+        self.assertEqual(sot.alt, value2)
+        self.assertEqual(sot.id, value2)
 
     def test__get_id_instance(self):
         class Test(resource2.Resource):
@@ -603,6 +609,125 @@ class TestResource(base.TestCase):
     def test__get_id_value(self):
         value = "id"
         self.assertEqual(value, resource2.Resource._get_id(value))
+
+    def test_to_dict(self):
+
+        class Test(resource2.Resource):
+            foo = resource2.Header('foo')
+            bar = resource2.Body('bar')
+
+        res = Test(id='FAKE_ID')
+
+        expected = {
+            'id': 'FAKE_ID',
+            'name': None,
+            'location': None,
+            'foo': None,
+            'bar': None
+        }
+        self.assertEqual(expected, res.to_dict())
+
+    def test_to_dict_no_body(self):
+
+        class Test(resource2.Resource):
+            foo = resource2.Header('foo')
+            bar = resource2.Body('bar')
+
+        res = Test(id='FAKE_ID')
+
+        expected = {
+            'location': None,
+            'foo': None,
+        }
+        self.assertEqual(expected, res.to_dict(body=False))
+
+    def test_to_dict_no_header(self):
+
+        class Test(resource2.Resource):
+            foo = resource2.Header('foo')
+            bar = resource2.Body('bar')
+
+        res = Test(id='FAKE_ID')
+
+        expected = {
+            'id': 'FAKE_ID',
+            'name': None,
+            'bar': None
+        }
+        self.assertEqual(expected, res.to_dict(headers=False))
+
+    def test_to_dict_ignore_none(self):
+
+        class Test(resource2.Resource):
+            foo = resource2.Header('foo')
+            bar = resource2.Body('bar')
+
+        res = Test(id='FAKE_ID', bar='BAR')
+
+        expected = {
+            'id': 'FAKE_ID',
+            'bar': 'BAR',
+        }
+        self.assertEqual(expected, res.to_dict(ignore_none=True))
+
+    def test_to_dict_with_mro(self):
+
+        class Parent(resource2.Resource):
+            foo = resource2.Header('foo')
+            bar = resource2.Body('bar')
+
+        class Child(Parent):
+            foo_new = resource2.Header('foo_baz_server')
+            bar_new = resource2.Body('bar_baz_server')
+
+        res = Child(id='FAKE_ID')
+
+        expected = {
+            'foo': None,
+            'bar': None,
+            'foo_new': None,
+            'bar_new': None,
+            'id': 'FAKE_ID',
+            'location': None,
+            'name': None
+        }
+        self.assertEqual(expected, res.to_dict())
+
+    def test_to_dict_value_error(self):
+
+        class Test(resource2.Resource):
+            foo = resource2.Header('foo')
+            bar = resource2.Body('bar')
+
+        res = Test(id='FAKE_ID')
+
+        err = self.assertRaises(ValueError,
+                                res.to_dict, body=False, headers=False)
+        self.assertEqual('At least one of `body` or `headers` must be True',
+                         six.text_type(err))
+
+    def test_to_dict_with_mro_no_override(self):
+
+        class Parent(resource2.Resource):
+            header = resource2.Header('HEADER')
+            body = resource2.Body('BODY')
+
+        class Child(Parent):
+            # The following two properties are not supposed to be overridden
+            # by the parent class property values.
+            header = resource2.Header('ANOTHER_HEADER')
+            body = resource2.Body('ANOTHER_BODY')
+
+        res = Child(id='FAKE_ID', body='BODY_VALUE', header='HEADER_VALUE')
+
+        expected = {
+            'body': 'BODY_VALUE',
+            'header': 'HEADER_VALUE',
+            'id': 'FAKE_ID',
+            'location': None,
+            'name': None
+        }
+        self.assertEqual(expected, res.to_dict())
 
     def test_new(self):
         class Test(resource2.Resource):
@@ -668,19 +793,20 @@ class TestResource(base.TestCase):
         self.assertEqual({key: {"x": body_value}}, result.body)
         self.assertEqual({"y": header_value}, result.headers)
 
-    def test__transpose_component(self):
+    def test__filter_component(self):
         client_name = "client_name"
         server_name = "serverName"
         value = "value"
         # Include something in the mapping that we don't receive
         # so the branch that looks at existence in the compoment is checked.
         mapping = {client_name: server_name, "other": "blah"}
-        component = {server_name: value}
+        component = {server_name: value, "something": "else"}
 
         sot = resource2.Resource()
-        result = sot._transpose_component(component, mapping)
+        result = sot._filter_component(component, mapping)
 
-        self.assertEqual({client_name: value}, result)
+        # The something:else mapping should not make it into here.
+        self.assertEqual({server_name: value}, result)
 
     def test__translate_response_no_body(self):
         class Test(resource2.Resource):
@@ -690,7 +816,7 @@ class TestResource(base.TestCase):
         response.headers = dict()
 
         sot = Test()
-        sot._transpose_component = mock.Mock(return_value={"attr": "value"})
+        sot._filter_component = mock.Mock(return_value={"attr": "value"})
 
         sot._translate_response(response, has_body=False)
 
@@ -707,7 +833,7 @@ class TestResource(base.TestCase):
         response.json.return_value = body
 
         sot = Test()
-        sot._transpose_component = mock.Mock(side_effect=[body, dict()])
+        sot._filter_component = mock.Mock(side_effect=[body, dict()])
 
         sot._translate_response(response, has_body=True)
 
@@ -728,7 +854,7 @@ class TestResource(base.TestCase):
         response.json.return_value = {key: body}
 
         sot = Test()
-        sot._transpose_component = mock.Mock(side_effect=[body, dict()])
+        sot._filter_component = mock.Mock(side_effect=[body, dict()])
 
         sot._translate_response(response, has_body=True)
 
@@ -812,7 +938,7 @@ class TestResourceActions(base.TestCase):
         sot._prepare_request = mock.Mock(return_value=self.request)
         sot._translate_response = mock.Mock()
 
-        result = sot.create(self.session)
+        result = sot.create(self.session, prepend_key=prepend_key)
 
         sot._prepare_request.assert_called_once_with(
             requires_id=requires_id, prepend_key=prepend_key)
@@ -851,10 +977,19 @@ class TestResourceActions(base.TestCase):
     def test_get(self):
         result = self.sot.get(self.session)
 
-        self.sot._prepare_request.assert_called_once_with()
+        self.sot._prepare_request.assert_called_once_with(requires_id=True)
         self.session.get.assert_called_once_with(
-            self.request.uri,
-            endpoint_filter=self.service_name)
+            self.request.uri, endpoint_filter=self.service_name)
+
+        self.sot._translate_response.assert_called_once_with(self.response)
+        self.assertEqual(result, self.sot)
+
+    def test_get_not_requires_id(self):
+        result = self.sot.get(self.session, False)
+
+        self.sot._prepare_request.assert_called_once_with(requires_id=False)
+        self.session.get.assert_called_once_with(
+            self.request.uri, endpoint_filter=self.service_name)
 
         self.sot._translate_response.assert_called_once_with(self.response)
         self.assertEqual(result, self.sot)
@@ -871,16 +1006,19 @@ class TestResourceActions(base.TestCase):
         self.sot._translate_response.assert_called_once_with(self.response)
         self.assertEqual(result, self.sot)
 
-    def _test_update(self, patch_update=False):
+    def _test_update(self, patch_update=False, prepend_key=True,
+                     has_body=True):
         self.sot.patch_update = patch_update
 
         # Need to make sot look dirty so we can attempt an update
         self.sot._body = mock.Mock()
         self.sot._body.dirty = mock.Mock(return_value={"x": "y"})
 
-        self.sot.update(self.session)
+        self.sot.update(self.session, prepend_key=prepend_key,
+                        has_body=has_body)
 
-        self.sot._prepare_request.assert_called_once_with(prepend_key=True)
+        self.sot._prepare_request.assert_called_once_with(
+            prepend_key=prepend_key)
 
         if patch_update:
             self.session.patch.assert_called_once_with(
@@ -893,13 +1031,14 @@ class TestResourceActions(base.TestCase):
                 endpoint_filter=self.service_name,
                 json=self.request.body, headers=self.request.headers)
 
-        self.sot._translate_response.assert_called_once_with(self.response)
+        self.sot._translate_response.assert_called_once_with(
+            self.response, has_body=has_body)
 
     def test_update_put(self):
-        self._test_update(patch_update=False)
+        self._test_update(patch_update=False, prepend_key=True, has_body=True)
 
     def test_update_patch(self):
-        self._test_update(patch_update=True)
+        self._test_update(patch_update=True, prepend_key=False, has_body=False)
 
     def test_update_not_dirty(self):
         self.sot._body = mock.Mock()

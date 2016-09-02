@@ -12,18 +12,22 @@
 
 from openstack import exceptions
 from openstack.orchestration.v1 import resource as _resource
+from openstack.orchestration.v1 import software_config as _sc
+from openstack.orchestration.v1 import software_deployment as _sd
 from openstack.orchestration.v1 import stack as _stack
-from openstack import proxy
+from openstack.orchestration.v1 import template as _template
+from openstack import proxy2
 
 
-class Proxy(proxy.BaseProxy):
+class Proxy(proxy2.BaseProxy):
 
     def create_stack(self, preview=False, **attrs):
         """Create a new stack from attributes
 
         :param bool perview: When ``True``, returns
-            :class:`~openstack.orchestration.v1.stack.StackPreview` objects,
-            otherwise :class:`~openstack.orchestration.v1.stack.Stack`.
+            an :class:`~openstack.orchestration.v1.stack.StackPreview` object,
+            otherwise an :class:`~openstack.orchestration.v1.stack.Stack`
+            object.
             *Default: ``False``*
         :param dict attrs: Keyword arguments which will be used to create
                            a :class:`~openstack.orchestration.v1.stack.Stack`,
@@ -32,8 +36,8 @@ class Proxy(proxy.BaseProxy):
         :returns: The results of stack creation
         :rtype: :class:`~openstack.orchestration.v1.stack.Stack`
         """
-        stk = _stack.StackPreview if preview else _stack.Stack
-        return self._create(stk, **attrs)
+        res_type = _stack.StackPreview if preview else _stack.Stack
+        return self._create(res_type, **attrs)
 
     def find_stack(self, name_or_id, ignore_missing=True):
         """Find a single stack
@@ -97,11 +101,28 @@ class Proxy(proxy.BaseProxy):
                     :class:`~openstack.exceptions.ResourceNotFound` will be
                     raised when the stack does not exist.
                     When set to ``True``, no exception will be set when
-                    attempting to delete a nonexistent server.
+                    attempting to delete a nonexistent stack.
 
         :returns: ``None``
         """
         self._delete(_stack.Stack, stack, ignore_missing=ignore_missing)
+
+    def check_stack(self, stack):
+        """Check a stack's status
+
+        Since this is an asynchronous action, the only way to check the result
+        is to track the stack's status.
+
+        :param stack: The value can be either the ID of a stack or an instance
+                      of :class:`~openstack.orchestration.v1.stack.Stack`.
+        :returns: ``None``
+        """
+        if isinstance(stack, _stack.Stack):
+            stk_obj = stack
+        else:
+            stk_obj = _stack.Stack.existing(id=stack)
+
+        stk_obj.check(self.session)
 
     def resources(self, stack, **query):
         """Return a generator of resources
@@ -120,23 +141,160 @@ class Proxy(proxy.BaseProxy):
                  when the stack cannot be found.
         """
         # first try treat the value as a stack object or an ID
-        try:
-            stk = _stack.Stack.from_id(stack)
-        except ValueError:
-            raise exceptions.ResourceNotFound(
-                "No stack found for %(v)s" % {'v': stack})
+        if isinstance(stack, _stack.Stack):
+            obj = stack
+        else:
+            obj = self._find(_stack.Stack, stack, ignore_missing=False)
 
-        # if stack object doesn't contain a valid name, it means the object
-        # was created on the fly so we need to retrieve its name
-        if not stk.name:
-            stk = self.find_stack(stack)
-            if stk is None:
-                raise exceptions.ResourceNotFound(
-                    "No stack found for %(v)s" % {'v': stack})
-
-        path_args = {
-            'stack_name': stk.name,
-            'stack_id': stk.id,
-        }
         return self._list(_resource.Resource, paginated=False,
-                          path_args=path_args, **query)
+                          stack_name=obj.name, stack_id=obj.id, **query)
+
+    def create_software_config(self, **attrs):
+        """Create a new software config from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create a
+            :class:`~openstack.orchestration.v1.software_config.SoftwareConfig`,
+            comprised of the properties on the SoftwareConfig class.
+
+        :returns: The results of software config creation
+        :rtype:
+            :class:`~openstack.orchestration.v1.software_config.SoftwareConfig`
+        """
+        return self._create(_sc.SoftwareConfig, **attrs)
+
+    def software_configs(self, **query):
+        """Returns a generator of software configs
+
+        :param dict query: Optional query parameters to be sent to limit the
+                           software configs returned.
+        :returns: A generator of software config objects.
+        :rtype:
+        :class:`~openstack.orchestration.v1.software_config.SoftwareConfig`
+        """
+        return self._list(_sc.SoftwareConfig, paginated=True, **query)
+
+    def get_software_config(self, software_config):
+        """Get details about a specific software config.
+
+        :param software_config: The value can be the ID of a software config
+            or a instace of
+            :class:`~openstack.orchestration.v1.software_config.SoftwareConfig`,
+
+        :returns: An object of type
+            :class:`~openstack.orchestration.v1.software_config.SoftwareConfig`
+        """
+        return self._get(_sc.SoftwareConfig, software_config)
+
+    def delete_software_config(self, software_config, ignore_missing=True):
+        """Delete a software config
+
+        :param software_config: The value can be either the ID of a software
+            config or an instance of
+            :class:`~openstack.orchestration.v1.software_config.SoftwareConfig`
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the software config does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent software config.
+        :returns: ``None``
+        """
+        self._delete(_sc.SoftwareConfig, software_config,
+                     ignore_missing=ignore_missing)
+
+    def create_software_deployment(self, **attrs):
+        """Create a new software deployment from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create a
+            :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`,
+            comprised of the properties on the SoftwareDeployment class.
+
+        :returns: The results of software deployment creation
+        :rtype:
+            :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`
+        """
+        return self._create(_sd.SoftwareDeployment, **attrs)
+
+    def software_deployments(self, **query):
+        """Returns a generator of software deployments
+
+        :param dict query: Optional query parameters to be sent to limit the
+                           software deployments returned.
+        :returns: A generator of software deployment objects.
+        :rtype:
+        :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`
+        """
+        return self._list(_sd.SoftwareDeployment, paginated=False, **query)
+
+    def get_software_deployment(self, software_deployment):
+        """Get details about a specific software deployment resource
+
+        :param software_deployment: The value can be the ID of a software
+            deployment or an instace of
+            :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`,
+
+        :returns: An object of type
+            :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`
+        """
+        return self._get(_sd.SoftwareDeployment, software_deployment)
+
+    def delete_software_deployment(self, software_deployment,
+                                   ignore_missing=True):
+        """Delete a software deployment
+
+        :param software_deployment: The value can be either the ID of a
+            software deployment or an instance of
+            :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the software deployment does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent software deployment.
+        :returns: ``None``
+        """
+        self._delete(_sd.SoftwareDeployment, software_deployment,
+                     ignore_missing=ignore_missing)
+
+    def update_software_deployment(self, software_deployment, **attrs):
+        """Update a software deployment
+
+        :param server: Either the ID of a software deployment or an instance of
+            :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`
+        :param dict attrs: The attributes to update on the software deployment
+                           represented by ``software_deployment``.
+
+        :returns: The updated software deployment
+        :rtype:
+        :class:`~openstack.orchestration.v1.software_deployment.SoftwareDeployment`
+        """
+        return self._update(_sd.SoftwareDeployment, software_deployment,
+                            **attrs)
+
+    def validate_template(self, template, environment=None, template_url=None,
+                          ignore_errors=None):
+        """Validates a template.
+
+        :param template: The stack template on which the validation is
+                         performed.
+        :param environment: A JSON environment for the stack, if provided.
+        :param template_url: A URI to the location containing the stack
+                             template for validation. This parameter is only
+                             required if the ``template`` parameter is None.
+                             This parameter is ignored if ``template`` is
+                             specified.
+        :param ignore_errors: A string containing comma separated error codes
+                              to ignore. Currently the only valid error code
+                              is '99001'.
+        :returns: The result of template validation.
+        :raises: :class:`~openstack.exceptions.InvalidRequest` if neither
+                 `template` not `template_url` is provided.
+        :raises: :class:`~openstack.exceptions.HttpException` if the template
+                 fails the validation.
+        """
+        if template is None and template_url is None:
+            raise exceptions.InvalidRequest(
+                "'template_url' must be specified when template is None")
+
+        tmpl = _template.Template.new()
+        return tmpl.validate(self.session, template, environment=environment,
+                             template_url=template_url,
+                             ignore_errors=ignore_errors)

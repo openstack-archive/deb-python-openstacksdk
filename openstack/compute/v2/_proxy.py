@@ -21,6 +21,7 @@ from openstack.compute.v2 import server as _server
 from openstack.compute.v2 import server_group as _server_group
 from openstack.compute.v2 import server_interface as _server_interface
 from openstack.compute.v2 import server_ip
+from openstack.compute.v2 import service as _service
 from openstack import proxy2
 from openstack import resource2
 
@@ -117,19 +118,6 @@ class Proxy(proxy2.BaseProxy):
         """
         flv = _flavor.FlavorDetail if details else _flavor.Flavor
         return self._list(flv, paginated=True, **query)
-
-    def update_flavor(self, flavor, **attrs):
-        """Update a flavor
-
-        :param flavor: Either the ID of a flavor or a
-                      :class:`~openstack.compute.v2.flavor.Flavor` instance.
-        :attrs kwargs: The attributes to update on the flavor represented
-                       by ``value``.
-
-        :returns: The updated flavor
-        :rtype: :class:`~openstack.compute.v2.flavor.Flavor`
-        """
-        return self._update(_flavor.Flavor, flavor, **attrs)
 
     def delete_image(self, image, ignore_missing=True):
         """Delete an image
@@ -335,7 +323,7 @@ class Proxy(proxy2.BaseProxy):
         """
         return self._create(_server.Server, **attrs)
 
-    def delete_server(self, server, ignore_missing=True):
+    def delete_server(self, server, ignore_missing=True, force=False):
         """Delete a server
 
         :param server: The value can be either the ID of a server or a
@@ -344,11 +332,17 @@ class Proxy(proxy2.BaseProxy):
                     :class:`~openstack.exceptions.ResourceNotFound` will be
                     raised when the server does not exist.
                     When set to ``True``, no exception will be set when
-                    attempting to delete a nonexistent server.
+                    attempting to delete a nonexistent server
+        :param bool force: When set to ``True``, the server deletion will be
+                           forced immediatly.
 
         :returns: ``None``
         """
-        self._delete(_server.Server, server, ignore_missing=ignore_missing)
+        if force:
+            server = self._get_resource(_server.Server, server)
+            server.force_delete(self.session)
+        else:
+            self._delete(_server.Server, server, ignore_missing=ignore_missing)
 
     def find_server(self, name_or_id, ignore_missing=True):
         """Find a single server
@@ -841,3 +835,69 @@ class Proxy(proxy2.BaseProxy):
                  when no resource can be found.
         """
         return self._get(_hypervisor.Hypervisor, hypervisor)
+
+    def get_service(self, service):
+        """Get a single service
+
+        :param service: The value can be the ID of a serivce or a
+               :class:`~openstack.compute.v2.service.Service`
+               instance.
+
+        :returns:
+            A :class:`~openstack.compute.v2.serivce.Service` object.
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(_service.Service, service)
+
+    def force_service_down(self, service, host, binary):
+        """Force a service down
+
+        :param service: Either the ID of a service or a
+                       :class:`~openstack.compute.v2.server.Service` instance.
+        :param str host: The host where service runs.
+        :param str binary: The name of service.
+
+        :returns: None
+        """
+        service = self._get_resource(_service.Service, service)
+        service.force_down(self.session, host, binary)
+
+    def disable_service(self, service, host, binary, disabled_reason=None):
+        """Disable a service
+
+        :param service: Either the ID of a service or a
+                       :class:`~openstack.compute.v2.server.Service` instance.
+        :param str host: The host where service runs.
+        :param str binary: The name of service.
+        :param str disabled_reason: The reason of force down a service.
+
+        :returns: None
+        """
+        service = self._get_resource(_service.Service, service)
+        service.disable(self.session,
+                        host, binary,
+                        disabled_reason)
+
+    def enable_service(self, service, host, binary):
+        """Enable a service
+
+        :param service: Either the ID of a service or a
+                       :class:`~openstack.compute.v2.server.Service` instance.
+        :param str host: The host where service runs.
+        :param str binary: The name of service.
+
+
+        :returns: None
+        """
+        service = self._get_resource(_service.Service, service)
+        service.enable(self.session, host, binary)
+
+    def services(self):
+        """Return a generator of service
+
+        :returns: A generator of service
+        :rtype: class: `~openstack.compute.v2.service.Service`
+        """
+
+        return self._list(_service.Service, paginated=False)

@@ -19,6 +19,7 @@ class TestProfile(base.TestCase):
     def test_init(self):
         prof = profile.Profile()
         expected = [
+            'alarming',
             'clustering',
             'compute',
             'database',
@@ -34,12 +35,29 @@ class TestProfile(base.TestCase):
         ]
         self.assertEqual(expected, prof.service_keys)
 
+    def test_default_versions(self):
+        prof = profile.Profile()
+        self.assertEqual('v1', prof.get_filter('clustering').version)
+        self.assertEqual('v2', prof.get_filter('compute').version)
+        self.assertEqual('v1', prof.get_filter('database').version)
+        self.assertEqual('v3', prof.get_filter('identity').version)
+        self.assertEqual('v2', prof.get_filter('image').version)
+        self.assertEqual('v2', prof.get_filter('network').version)
+        self.assertEqual('v1', prof.get_filter('object-store').version)
+        self.assertEqual('v1', prof.get_filter('orchestration').version)
+        self.assertEqual('v1', prof.get_filter('key-manager').version)
+        self.assertEqual('v1', prof.get_filter('metering').version)
+        self.assertEqual('v2', prof.get_filter('volume').version)
+        self.assertEqual('v1', prof.get_filter('messaging').version)
+
     def test_set(self):
         prof = profile.Profile()
-        prof.set_version('compute', 'v2')
-        self.assertEqual('v2', prof.get_filter('compute').version)
+        prof.set_version('alarming', 'v2')
+        self.assertEqual('v2', prof.get_filter('alarming').version)
         prof.set_version('clustering', 'v1')
         self.assertEqual('v1', prof.get_filter('clustering').version)
+        prof.set_version('compute', 'v2')
+        self.assertEqual('v2', prof.get_filter('compute').version)
         prof.set_version('database', 'v3')
         self.assertEqual('v3', prof.get_filter('database').version)
         prof.set_version('identity', 'v4')
@@ -59,6 +77,16 @@ class TestProfile(base.TestCase):
         prof = profile.Profile()
         self.assertRaises(exceptions.SDKException, prof.set_version, 'bogus',
                           'v2')
+
+    def test_set_api_version(self):
+        # This tests that api_version is effective after explicit setting, or
+        # else it defaults to None.
+        prof = profile.Profile()
+        prof.set_api_version('clustering', '1.2')
+        svc = prof.get_filter('clustering')
+        self.assertEqual('1.2', svc.api_version)
+        svc = prof.get_filter('compute')
+        self.assertIsNone(svc.api_version)
 
     def test_set_all(self):
         prof = profile.Profile()

@@ -25,6 +25,7 @@ from openstack.network.v2 import network_ip_availability
 from openstack.network.v2 import pool as _pool
 from openstack.network.v2 import pool_member as _pool_member
 from openstack.network.v2 import port as _port
+from openstack.network.v2 import qos_policy as _qos_policy
 from openstack.network.v2 import quota as _quota
 from openstack.network.v2 import rbac_policy as _rbac_policy
 from openstack.network.v2 import router as _router
@@ -1174,6 +1175,22 @@ class Proxy(proxy.BaseProxy):
         """
         return self._get(_quota.Quota, quota)
 
+    def get_quota_default(self, quota):
+        """Get a default quota
+
+        :param quota: The value can be the ID of a default quota or a
+                      :class:`~openstack.network.v2.quota.QuotaDefault`
+                      instance. The ID of a default quota is the same
+                      as the project ID for the default quota.
+
+        :returns: One :class:`~openstack.network.v2.quota.QuotaDefault`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        project_id = resource.Resource.get_id(quota)
+        return self._get(_quota.QuotaDefault,
+                         path_args={'project': project_id})
+
     def quotas(self, **query):
         """Return a generator of quotas
 
@@ -1228,10 +1245,10 @@ class Proxy(proxy.BaseProxy):
         self._delete(_rbac_policy.RBACPolicy, rbac_policy,
                      ignore_missing=ignore_missing)
 
-    def find_rbac_policy(self, id, ignore_missing=True):
+    def find_rbac_policy(self, rbac_policy, ignore_missing=True):
         """Find a single RBAC policy
 
-        :param id: The ID of a RBAC policy.
+        :param rbac_policy: The ID of a RBAC policy.
         :param bool ignore_missing: When set to ``False``
             :class:`~openstack.exceptions.ResourceNotFound` will be
             raised when the resource does not exist.
@@ -1240,7 +1257,7 @@ class Proxy(proxy.BaseProxy):
         :returns: One
             :class:`~openstack.network.v2.rbac_policy.RBACPolicy` or None
         """
-        return self._find(_rbac_policy.RBACPolicy, id,
+        return self._find(_rbac_policy.RBACPolicy, rbac_policy,
                           ignore_missing=ignore_missing)
 
     def get_rbac_policy(self, rbac_policy):
@@ -1874,3 +1891,86 @@ class Proxy(proxy.BaseProxy):
         :rtype: :class:`~openstack.network.v2.vpn_service.VPNService`
         """
         return self._update(_vpn_service.VPNService, vpn_service, **attrs)
+
+    def create_qos_policy(self, **attrs):
+        """Create a new QoS policy from attributes
+
+        :param dict attrs: Keyword arguments which will be used to create
+                           a :class:`~openstack.network.v2.qos_policy.
+                           QoSPolicy`, comprised of the properties on the
+                           QoSPolicy class.
+
+        :returns: The results of QoS policy creation
+        :rtype: :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+        """
+        return self._create(_qos_policy.QoSPolicy, **attrs)
+
+    def delete_qos_policy(self, qos_policy, ignore_missing=True):
+        """Delete a QoS policy
+
+        :param qos_policy: The value can be either the ID of a QoS policy or a
+                           :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+                           instance.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the QoS policy does not exist.
+                    When set to ``True``, no exception will be set when
+                    attempting to delete a nonexistent QoS policy.
+
+        :returns: ``None``
+        """
+        self._delete(_qos_policy.QoSPolicy, qos_policy,
+                     ignore_missing=ignore_missing)
+
+    def find_qos_policy(self, name_or_id, ignore_missing=True):
+        """Find a single QoS policy
+
+        :param name_or_id: The name or ID of a QoS policy.
+        :param bool ignore_missing: When set to ``False``
+                    :class:`~openstack.exceptions.ResourceNotFound` will be
+                    raised when the resource does not exist.
+                    When set to ``True``, None will be returned when
+                    attempting to find a nonexistent resource.
+        :returns: One :class:`~openstack.network.v2.qos_policy.QoSPolicy` or
+                  None
+        """
+        return self._find(_qos_policy.QoSPolicy, name_or_id,
+                          ignore_missing=ignore_missing)
+
+    def get_qos_policy(self, qos_policy):
+        """Get a single QoS policy
+
+        :param qos_policy: The value can be the ID of a QoS policy or a
+                           :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+                           instance.
+
+        :returns: One :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+        :raises: :class:`~openstack.exceptions.ResourceNotFound`
+                 when no resource can be found.
+        """
+        return self._get(_qos_policy.QoSPolicy, qos_policy)
+
+    def qos_policies(self, **query):
+        """Return a generator of QoS policies
+
+        :param kwargs \*\*query: Optional query parameters to be sent to limit
+                                 the resources being returned.
+
+        :returns: A generator of QoS policy objects
+        :rtype: :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+        """
+        return self._list(_qos_policy.QoSPolicy, paginated=False, **query)
+
+    def update_qos_policy(self, qos_policy, **attrs):
+        """Update a QoS policy
+
+        :param qos_policy: Either the id of a QoS policy or a
+                           :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+                           instance.
+        :attrs kwargs: The attributes to update on the QoS policy represented
+                       by ``value``.
+
+        :returns: The updated QoS policy
+        :rtype: :class:`~openstack.network.v2.qos_policy.QoSPolicy`
+        """
+        return self._update(_qos_policy.QoSPolicy, qos_policy, **attrs)

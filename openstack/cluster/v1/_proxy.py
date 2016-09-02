@@ -13,6 +13,7 @@
 from openstack.cluster.v1 import action as _action
 from openstack.cluster.v1 import build_info
 from openstack.cluster.v1 import cluster as _cluster
+from openstack.cluster.v1 import cluster_attr as _cluster_attr
 from openstack.cluster.v1 import cluster_policy as _cluster_policy
 from openstack.cluster.v1 import event as _event
 from openstack.cluster.v1 import node as _node
@@ -21,18 +22,18 @@ from openstack.cluster.v1 import policy_type as _policy_type
 from openstack.cluster.v1 import profile as _profile
 from openstack.cluster.v1 import profile_type as _profile_type
 from openstack.cluster.v1 import receiver as _receiver
-from openstack import proxy
-from openstack import resource
+from openstack import proxy2
+from openstack import resource2
 
 
-class Proxy(proxy.BaseProxy):
+class Proxy(proxy2.BaseProxy):
 
     def get_build_info(self):
         """Get build info for service engine and API
 
         :returns: A dictionary containing the API and engine revision string.
         """
-        return self._get(build_info.BuildInfo)
+        return self._get(build_info.BuildInfo, requires_id=False)
 
     def profile_types(self, **query):
         """Get a generator of profile types.
@@ -168,6 +169,18 @@ class Proxy(proxy.BaseProxy):
         :rtype: :class:`~openstack.cluster.v1.profile.Profile`
         """
         return self._update(_profile.Profile, profile, **attrs)
+
+    def validate_profile(self, **attrs):
+        """Validate a profile spec.
+
+        :param dict attrs: Keyword arguments that will be used to create a
+             :class:`~openstack.cluster.v1.profile.ProfileValidate`, it is
+             comprised of the properties on the Profile class.
+
+        :returns: The results of profile validation.
+        :rtype: :class:`~openstack.cluster.v1.profile.ProfileValidate`.
+        """
+        return self._create(_profile.ProfileValidate, **attrs)
 
     def create_cluster(self, **attrs):
         """Create a new cluster from attributes.
@@ -381,6 +394,18 @@ class Proxy(proxy.BaseProxy):
             obj = self._find(_cluster.Cluster, cluster, ignore_missing=False)
         return obj.policy_update(self.session, policy, **params)
 
+    def collect_cluster_attrs(self, cluster, path):
+        """Collect attribute values across a cluster.
+
+        :param cluster: The value can be either the ID of a cluster or a
+            :class:`~openstack.cluster.v1.cluster.Cluster` instance.
+        :param path: A Json path string specifying the attribute to collect.
+
+        :returns: A dictionary containing the list of attribute values.
+        """
+        return self._list(_cluster_attr.ClusterAttr, paginated=False,
+                          cluster_id=cluster, path=path)
+
     def check_cluster(self, cluster, **params):
         """check a cluster.
 
@@ -465,19 +490,25 @@ class Proxy(proxy.BaseProxy):
         return self._find(_node.Node, name_or_id,
                           ignore_missing=ignore_missing)
 
-    def get_node(self, node, args=None):
+    def get_node(self, node, details=False):
         """Get a single node.
 
         :param node: The value can be the name or ID of a node or a
             :class:`~openstack.cluster.v1.node.Node` instance.
-        :param args: An optional argument that will be translated into query
-            strings when retrieving the node.
+        :param details: An optional argument that indicates whether the
+            server should return more details when retrieving the node data.
 
         :returns: One :class:`~openstack.cluster.v1.node.Node`
         :raises: :class:`~openstack.exceptions.ResourceNotFound` when no
             node matching the name or ID could be found.
         """
-        return self._get(_node.Node, node, args=args)
+        # NOTE: When retrieving node with details (using NodeDetail resource),
+        # the `node_id` is treated as part of the base_path thus a URI
+        # property rather than a resource ID as assumed by the _get() method
+        # in base proxy.
+        if details:
+            return self._get(_node.NodeDetail, requires_id=False, node_id=node)
+        return self._get(_node.Node, node)
 
     def nodes(self, **query):
         """Retrieve a generator of nodes.
@@ -610,6 +641,18 @@ class Proxy(proxy.BaseProxy):
         """
         return self._update(_policy.Policy, policy, **attrs)
 
+    def validate_policy(self, **attrs):
+        """Validate a policy spec.
+
+        :param dict attrs: Keyword arguments that will be used to create a
+             :class:`~openstack.cluster.v1.policy.PolicyValidate`, it is
+             comprised of the properties on the Policy class.
+
+        :returns: The results of Policy validation.
+        :rtype: :class:`~openstack.cluster.v1.policy.PolicyValidate`.
+        """
+        return self._create(_policy.PolicyValidate, **attrs)
+
     def cluster_policies(self, cluster, **query):
         """Retrieve a generator of cluster-policy bindings.
 
@@ -617,14 +660,13 @@ class Proxy(proxy.BaseProxy):
             :class:`~openstack.cluster.v1.cluster.Cluster` instance.
         :param kwargs \*\*query: Optional query parameters to be sent to
             restrict the policies to be returned. Available parameters include:
-
             * enabled: A boolean value indicating whether the policy is
                        enabled on the cluster.
         :returns: A generator of cluster-policy binding instances.
         """
-        cluster_id = resource.Resource.get_id(cluster)
+        cluster_id = resource2.Resource._get_id(cluster)
         return self._list(_cluster_policy.ClusterPolicy, paginated=False,
-                          path_args={'cluster_id': cluster_id}, **query)
+                          cluster_id=cluster_id, **query)
 
     def get_cluster_policy(self, cluster_policy, cluster):
         """Get a cluster-policy binding.
@@ -640,10 +682,8 @@ class Proxy(proxy.BaseProxy):
         :raises: :class:`~openstack.exceptions.ResourceNotFound` when no
             cluster-policy binding matching the criteria could be found.
         """
-        cluster_id = resource.Resource.get_id(cluster)
-        policy_id = resource.Resource.get_id(cluster_policy)
-        return self._get(_cluster_policy.ClusterPolicy, policy_id,
-                         path_args={'cluster_id': cluster_id})
+        return self._get(_cluster_policy.ClusterPolicy, cluster_policy,
+                         cluster_id=cluster)
 
     def create_receiver(self, **attrs):
         """Create a new receiver from attributes.
