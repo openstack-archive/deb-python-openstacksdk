@@ -1,7 +1,8 @@
-python-openstacksdk (0.9.5-1) UNRELEASED; urgency=medium
+python-openstacksdk (0.9.5-1) experimental; urgency=medium
 
   [ Thomas Goirand ]
   * Using pkgos-dh_auto_{test,install} from openstack-pkg-tools >= 52~.
+  * Using OpenStack's Gerrit as VCS URLs.
 
   [ Corey Bryant ]
   * New upstream release.
