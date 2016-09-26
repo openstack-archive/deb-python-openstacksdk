@@ -44,8 +44,8 @@ Build-Depends-Indep: git,
                      subunit,
                      testrepository
 Standards-Version: 3.9.8
-Vcs-Browser: https://git.openstack.org/cgit/openstack/deb-python-openstacksdk
-Vcs-Git: https://git.openstack.org/openstack/deb-python-openstacksdk
+Vcs-Browser: https://git.openstack.org/cgit/openstack/deb-python-openstacksdk?h=debian%2Fnewton
+Vcs-Git: https://git.openstack.org/openstack/deb-python-openstacksdk -b debian/newton
 Homepage: https://github.com/stackforge/python-openstacksdk
 
 Package: python-openstacksdk
