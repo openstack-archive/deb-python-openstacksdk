@@ -1,0 +1,9 @@
+Code-Review+2: Brian Curtin <brian@python.org>
+Code-Review+2: Richard Theis <rtheis@us.ibm.com>
+Workflow+1: Richard Theis <rtheis@us.ibm.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 26 Oct 2016 12:49:12 +0000
+Reviewed-on: https://review.openstack.org/386440
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
