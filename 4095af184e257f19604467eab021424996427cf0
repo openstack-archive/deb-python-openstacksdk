@@ -1,0 +1,10 @@
+Code-Review+1: Ethan Lynn <xuanlangjian@gmail.com>
+Code-Review+1: XueFeng Liu <liu.xuefeng1@zte.com.cn>
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 30 Nov 2016 18:50:04 +0000
+Reviewed-on: https://review.openstack.org/401924
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
