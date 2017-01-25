@@ -1,0 +1,9 @@
+Code-Review+1: Xinhui Li <lxinhui@vmware.com>
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 24 Jan 2017 16:44:47 +0000
+Reviewed-on: https://review.openstack.org/412079
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
