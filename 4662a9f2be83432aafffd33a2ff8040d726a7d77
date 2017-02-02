@@ -1,0 +1,9 @@
+Code-Review+1: Dinesh Bhor <dinesh.bhor@nttdata.com>
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 31 Jan 2017 13:53:58 +0000
+Reviewed-on: https://review.openstack.org/427040
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
