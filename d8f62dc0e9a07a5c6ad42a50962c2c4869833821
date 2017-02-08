@@ -1,0 +1,9 @@
+Code-Review+2: Qiming Teng <tengqim@cn.ibm.com>
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 08 Feb 2017 15:00:54 +0000
+Reviewed-on: https://review.openstack.org/416598
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
