@@ -1,0 +1,10 @@
+Code-Review+1: Ethan Lynn <xuanlangjian@gmail.com>
+Code-Review+2: Terry Howe <terrylhowe@gmail.com>
+Code-Review+2: Qiming Teng <tengqim@cn.ibm.com>
+Workflow+1: Qiming Teng <tengqim@cn.ibm.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 20 Mar 2017 01:27:20 +0000
+Reviewed-on: https://review.openstack.org/446880
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master

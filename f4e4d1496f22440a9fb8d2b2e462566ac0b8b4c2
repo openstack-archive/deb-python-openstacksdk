@@ -1,0 +1,10 @@
+Code-Review+2: Terry Howe <terrylhowe@gmail.com>
+Code-Review+1: Ankur <ankur.gupta@intel.com>
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 22 Feb 2017 17:23:03 +0000
+Reviewed-on: https://review.openstack.org/403904
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
