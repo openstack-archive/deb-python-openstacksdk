@@ -1,0 +1,9 @@
+Code-Review+1: Slawek Kaplonski <slawek@kaplonski.pl>
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 03 May 2017 11:39:46 +0000
+Reviewed-on: https://review.openstack.org/356512
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
