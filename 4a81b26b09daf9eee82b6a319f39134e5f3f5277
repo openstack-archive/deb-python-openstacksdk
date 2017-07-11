@@ -1,0 +1,8 @@
+Code-Review+2: Brian Curtin <brian@python.org>
+Workflow+1: Brian Curtin <brian@python.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 11 Jul 2017 15:01:28 +0000
+Reviewed-on: https://review.openstack.org/482469
+Project: openstack/deb-python-openstacksdk
+Branch: refs/heads/master
